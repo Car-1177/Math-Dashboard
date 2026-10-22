@@ -1,0 +1,215 @@
+  /* ================= Part 4: Systems, Inequalities, Fractions ================= */
+
+  /* ---- Systems solver ---- */
+  var sysInput = document.getElementById("sys-input");
+  var sysResults = document.getElementById("sys-results");
+
+  function parseLinearEq(text, vars) {
+    var parts = text.split("=");
+    if (parts.length !== 2) return null;
+    var side = parts[0].replace(/\s+/g, "").replace(/-/g, "+-");
+    var terms = side.split("+").filter(function (p) { return p.length; });
+    var coefs = {}; vars.forEach(function (v) { coefs[v] = 0; });
+    var constant = -parseFloat(parts[1]);
+    for (var i = 0; i < terms.length; i++) {
+      var t = terms[i], matched = false;
+      for (var j = 0; j < vars.length; j++) {
+        if (t.indexOf(vars[j]) >= 0) {
+          var cs = t.replace(vars[j], "");
+          coefs[vars[j]] += (cs === "" || cs === "+") ? 1 : (cs === "-" ? -1 : parseFloat(cs));
+          matched = true; break;
+        }
+      }
+      if (!matched) constant += parseFloat(t);
+    }
+    return { coefs: coefs, constant: constant };
+  }
+
+  function solveSystem() {
+    var lines = sysInput.value.split("\n").map(function (l) { return l.trim(); }).filter(Boolean);
+    if (lines.length < 2) { sysResults.innerHTML = '<div class="warn">Enter at least two equations.</div>'; return; }
+    var vars = [];
+    lines.forEach(function (l) {
+      var m = l.match(/[a-zA-Z]/g);
+      if (m) m.forEach(function (v) { if (vars.indexOf(v) < 0) vars.push(v); });
+    });
+    vars.sort();
+    if (vars.length < 2) { sysResults.innerHTML = '<div class="warn">Need at least two variables (x, y, ...).</div>'; return; }
+    if (vars.length > 3) vars = vars.slice(0, 3);
+
+    var eqs = lines.map(function (l) { return parseLinearEq(l, vars); });
+    if (eqs.some(function (e) { return !e; })) { sysResults.innerHTML = '<div class="warn">Could not parse one of the equations.</div>'; return; }
+
+    var n = eqs.length;
+    var A = eqs.map(function (e) { return vars.map(function (v) { return e.coefs[v]; }); });
+    var b = eqs.map(function (e) { return e.constant; });
+
+    var aug = A.map(function (row, i) { return row.concat([b[i]]); });
+    var singular = false;
+    for (var col = 0; col < vars.length; col++) {
+      var piv = col;
+      for (var r = col + 1; r < n; r++) if (Math.abs(aug[r][col]) > Math.abs(aug[piv][col])) piv = r;
+      if (Math.abs(aug[piv][col]) < 1e-12) { singular = true; break; }
+      var tmp = aug[col]; aug[col] = aug[piv]; aug[piv] = tmp;
+      for (var r2 = 0; r2 < n; r2++) {
+        if (r2 === col) continue;
+        var f = aug[r2][col] / aug[col][col];
+        for (var c2 = col; c2 <= vars.length; c2++) aug[r2][c2] -= f * aug[col][c2];
+      }
+    }
+    if (singular) { sysResults.innerHTML = '<div class="warn">The system is singular — no unique solution.</div>'; return; }
+
+    var sol = {};
+    vars.forEach(function (v, i) { sol[v] = aug[i][vars.length] / aug[i][i]; });
+
+    var html = '<div class="panel-block"><div class="k">Solution (Gaussian elimination)</div><div class="v" style="font-size:18px">' +
+      vars.map(function (v) { return v + " = " + fmt(sol[v]); }).join("<br>") + '</div></div>';
+
+    if (vars.length === 2) {
+      var a1 = A[0][0], b1 = A[0][1], c1 = b[0];
+      var a2 = A[1][0], b2 = A[1][1], c2 = b[1];
+      var D = a1 * b2 - a2 * b1;
+      html += '<div class="note" style="margin-top:12px"><div class="k">Cramer\'s rule</div><div class="v">D = ' + fmt(D) +
+        ' · Dx = ' + fmt(c1 * b2 - c2 * b1) + ' · Dy = ' + fmt(a1 * c2 - a2 * c1) + '</div></div>';
+      html += '<div class="note" style="margin-top:8px"><div class="k">Verification</div><div class="v">' +
+        lines.map(function (l, i) {
+          var lhs = vars.reduce(function (s, v, j) { return s + A[i][j] * sol[v]; }, 0);
+          return l + " → " + fmt(lhs) + " = " + fmt(b[i]);
+        }).join("<br>") + '</div></div>';
+    }
+    sysResults.innerHTML = html;
+  }
+  document.getElementById("sys-solve").addEventListener("click", solveSystem);
+
+  /* ---- Inequality solver ---- */
+  var ineqInput = document.getElementById("ineq-input");
+  var ineqResults = document.getElementById("ineq-results");
+
+  function solveInequality() {
+    var text = ineqInput.value.trim();
+    if (!text) { ineqResults.innerHTML = '<div class="empty">Enter an inequality.</div>'; return; }
+    var m = text.match(/(<=|>=|<|>|≤|≥)/);
+    if (!m) { ineqResults.innerHTML = '<div class="warn">No inequality symbol found.</div>'; return; }
+    var op = m[1].replace("≤", "<=").replace("≥", ">=");
+    var parts = text.split(m[1]);
+    var left = parts[0], right = parts[1];
+    var varName = (left + right).match(/[a-zA-Z]/);
+    if (!varName) { ineqResults.innerHTML = '<div class="warn">No variable found.</div>'; return; }
+    varName = varName[0];
+
+    function parseSide(s) {
+      var cleaned = s.replace(/\s+/g, "").replace(/-/g, "+-");
+      var terms = cleaned.split("+").filter(function (p) { return p.length; });
+      var coef = 0, constant = 0;
+      terms.forEach(function (t) {
+        if (t.indexOf(varName) >= 0) {
+          var cs = t.replace(varName, "");
+          coef += (cs === "" || cs === "+") ? 1 : (cs === "-" ? -1 : parseFloat(cs));
+        } else constant += parseFloat(t);
+      });
+      return { coef: coef, constant: constant };
+    }
+    var L = parseSide(left), R = parseSide(right);
+    var coef = L.coef - R.coef, constant = R.constant - L.constant;
+    if (coef === 0) { ineqResults.innerHTML = '<div class="warn">Variable cancels out — no solution or all reals.</div>'; return; }
+
+    var boundary = constant / coef;
+    var flipped = coef < 0;
+    var finalOp = op;
+    if (flipped) {
+      finalOp = op === "<" ? ">" : op === ">" ? "<" : op === "<=" ? ">=" : "<=";
+    }
+    var isStrict = finalOp === "<" || finalOp === ">";
+    var goesRight = finalOp === ">" || finalOp === ">=";
+
+    var interval;
+    if (goesRight) interval = isStrict ? "(" + fmt(boundary) + ", ∞)" : "[" + fmt(boundary) + ", ∞)";
+    else interval = isStrict ? "(−∞, " + fmt(boundary) + ")" : "(−∞, " + fmt(boundary) + "]";
+
+    var html = '<div class="panel-block"><div class="k">Solution</div><div class="v" style="font-size:20px">' +
+      varName + " " + finalOp + " " + fmt(boundary) + '</div></div>';
+    html += '<div class="note" style="margin-top:10px"><div class="k">Interval notation</div><div class="v">' + interval + '</div></div>';
+    if (flipped) html += '<div class="note" style="margin-top:8px"><div class="k">Note</div><div class="v">Dividing by a negative number flips the inequality sign.</div></div>';
+
+    var lo = boundary - 10, hi = boundary + 10;
+    var pos = function (v) { return ((v - lo) / (hi - lo)) * 100; };
+    var nl = '<div class="number-line"><div class="nl-axis"></div>';
+    for (var t = Math.ceil(lo); t <= hi; t += 5) {
+      nl += '<div class="nl-tick" style="left:' + pos(t) + '%"></div>';
+      nl += '<div class="nl-label" style="left:' + pos(t) + '%">' + t + '</div>';
+    }
+    var regionLeft = goesRight ? pos(boundary) : 0;
+    var regionRight = goesRight ? 100 : pos(boundary);
+    nl += '<div class="nl-region" style="left:' + regionLeft + '%;width:' + (regionRight - regionLeft) + '%"></div>';
+    nl += '<div class="nl-point' + (isStrict ? "" : " filled") + '" style="left:' + pos(boundary) + '%"></div>';
+    nl += '</div>';
+    html += nl;
+    ineqResults.innerHTML = html;
+  }
+  document.getElementById("ineq-solve").addEventListener("click", solveInequality);
+
+  /* ---- Fraction calculator ---- */
+  var fracResults = document.getElementById("frac-results");
+
+  function simplifyFrac(n, d) {
+    if (d < 0) { n = -n; d = -d; }
+    var g = gcdInt(n, d);
+    return { n: n / g, d: d / g };
+  }
+  function fracToMixed(n, d) {
+    if (Math.abs(n) < d) return null;
+    var whole = Math.trunc(n / d);
+    var rem = Math.abs(n % d);
+    return { whole: whole, n: rem, d: d };
+  }
+  function fracHTML(n, d) {
+    return '<span class="fraction-display"><span class="num">' + n + '</span><span class="den">' + d + '</span></span>';
+  }
+
+  function calcFractions() {
+    var n1 = parseInt(document.getElementById("f1n").value, 10);
+    var d1 = parseInt(document.getElementById("f1d").value, 10);
+    var n2 = parseInt(document.getElementById("f2n").value, 10);
+    var d2 = parseInt(document.getElementById("f2d").value, 10);
+    var op = document.getElementById("frac-op").value;
+    if ([n1, d1, n2, d2].some(function (v) { return isNaN(v); })) { fracResults.innerHTML = '<div class="warn">Fill in all four values.</div>'; return; }
+    if (d1 === 0 || d2 === 0) { fracResults.innerHTML = '<div class="warn">Denominators cannot be zero.</div>'; return; }
+
+    var rn, rd, steps = [];
+    steps.push({ math: fracHTML(n1, d1) + " " + op + " " + fracHTML(n2, d2), why: "Original problem" });
+
+    if (op === "+" || op === "-") {
+      var lcd = lcmInt(d1, d2);
+      var k1 = lcd / d1, k2 = lcd / d2;
+      steps.push({ math: "LCD = " + lcd, why: "Least common denominator of " + d1 + " and " + d2 });
+      steps.push({ math: fracHTML(n1 * k1, lcd) + " " + op + " " + fracHTML(n2 * k2, lcd), why: "Rewrite with common denominator" });
+      rn = op === "+" ? n1 * k1 + n2 * k2 : n1 * k1 - n2 * k2;
+      rd = lcd;
+    } else if (op === "*") {
+      rn = n1 * n2; rd = d1 * d2;
+      steps.push({ math: fracHTML(n1 * n2, d1 * d2), why: "Multiply numerators and denominators" });
+    } else {
+      rn = n1 * d2; rd = d1 * n2;
+      steps.push({ math: fracHTML(n1, d1) + " × " + fracHTML(d2, n2), why: "Multiply by the reciprocal" });
+      steps.push({ math: fracHTML(n1 * d2, d1 * n2), why: "Multiply across" });
+    }
+    if (rd === 0) { fracResults.innerHTML = '<div class="warn">Result is undefined (division by zero).</div>'; return; }
+
+    var s = simplifyFrac(rn, rd);
+    if (s.n !== rn || s.d !== rd) {
+      var g = gcdInt(rn, rd);
+      steps.push({ math: fracHTML(rn / g, rd / g), why: "Simplify by dividing by GCD = " + g });
+    }
+    steps.push({ math: fracHTML(s.n, s.d), why: "Final simplified answer" });
+
+    var html = '<div class="steps-list">' + steps.map(function (st) {
+      return '<div class="step-item"><span class="math">' + st.math + '</span><div class="why">' + st.why + '</div></div>';
+    }).join("") + '</div>';
+
+    html += '<div class="panel-block" style="margin-top:14px"><div class="k">Result</div><div class="v" style="font-size:22px">' + fracHTML(s.n, s.d) + '</div></div>';
+    var mixed = fracToMixed(s.n, s.d);
+    if (mixed) html += '<div class="note" style="margin-top:10px"><div class="k">Mixed number</div><div class="v">' + mixed.whole + ' ' + fracHTML(mixed.n, mixed.d) + '</div></div>';
+    html += '<div class="note" style="margin-top:8px"><div class="k">Decimal</div><div class="v">' + fmt(s.n / s.d) + '</div></div>';
+    fracResults.innerHTML = html;
+  }
+  document.getElementById("frac-solve").addEventListener("click", calcFractions);

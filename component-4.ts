@@ -1,0 +1,1 @@
+export const supabase = createClient(url, anonKey);

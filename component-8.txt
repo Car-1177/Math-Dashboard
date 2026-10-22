@@ -1,0 +1,5 @@
+
+### Step 16. Create the `.env.local` file
+1. In VS Code, in the **left file list**, right-click the top-level `math-app` folder → **New File**
+2. Name it exactly: `.env.local`
+3. Paste this, replacing with your real values from Step 12:

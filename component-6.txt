@@ -1,0 +1,2 @@
+# press Ctrl+C to stop, then:
+npm run dev

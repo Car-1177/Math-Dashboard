@@ -1,0 +1,45 @@
+  /* ================= Part 7: Register new tabs + init ================= */
+  /* Add these entries to ALL_TABS in your settings code:
+     { id: "steps", label: "Steps" },
+     { id: "unitcircle", label: "Unit Circle" },
+     { id: "systems", label: "Systems" },
+     { id: "inequalities", label: "Inequalities" },
+     { id: "fractions", label: "Fractions" },
+     { id: "sequences", label: "Sequences" },
+     { id: "triangle", label: "Triangle" },
+     { id: "practice", label: "Practice" },
+     { id: "progress", label: "Progress" },
+     { id: "complex", label: "Complex" },
+     { id: "shortcuts", label: "Shortcuts" }
+  */
+
+  /* Add matching tab buttons inside <nav id="tabs">:
+     <button class="tab" data-tab="steps">Steps</button>
+     <button class="tab" data-tab="unitcircle">Unit Circle</button>
+     <button class="tab" data-tab="systems">Systems</button>
+     <button class="tab" data-tab="inequalities">Inequalities</button>
+     <button class="tab" data-tab="fractions">Fractions</button>
+     <button class="tab" data-tab="sequences">Sequences</button>
+     <button class="tab" data-tab="triangle">Triangle</button>
+     <button class="tab" data-tab="practice">Practice</button>
+     <button class="tab" data-tab="progress">Progress</button>
+     <button class="tab" data-tab="complex">Complex</button>
+     <button class="tab" data-tab="shortcuts">Shortcuts</button>
+  */
+
+  /* Print button — add to the Reference panel header */
+  var printBtn = document.createElement("button");
+  printBtn.className = "copy-btn";
+  printBtn.textContent = "🖨 Print";
+  printBtn.addEventListener("click", function () { window.print(); });
+  var refCard = document.querySelector("#panel-reference .card h2");
+  if (refCard) refCard.appendChild(printBtn);
+
+  /* Re-render everything when decimals change */
+  var _origApplyDecimals = applyDecimals;
+  applyDecimals = function () {
+    _origApplyDecimals();
+    if (typeof renderSteps === "function" && stepsInput.value) renderSteps();
+    if (typeof renderUcReadout === "function") renderUcReadout();
+    if (typeof renderProgress === "function") renderProgress();
+  };

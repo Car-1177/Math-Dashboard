@@ -1,0 +1,368 @@
+<!-- ============================================================
+     PART 3 — ACT / SAT / PSAT TABS
+     Three snippets. Paste each into the spot described.
+     ============================================================ -->
+
+
+<!-- ============================================================
+     SNIPPET 1 of 3 — NAV BUTTONS
+     Find:  <button class="tab" data-tab="reference">Reference</button>
+     Paste these THREE lines immediately AFTER that line.
+     ============================================================ -->
+    <button class="tab" data-tab="act">ACT</button>
+    <button class="tab" data-tab="sat">SAT</button>
+    <button class="tab" data-tab="psat">PSAT</button>
+
+
+<!-- ============================================================
+     SNIPPET 2 of 3 — PANELS
+     Find:  </main>
+     Paste this ENTIRE block immediately BEFORE that line.
+     ============================================================ -->
+    <!-- ACT -->
+    <section id="panel-act" class="grid hidden">
+      <div class="card">
+        <h3>ACT Math Practice</h3>
+        <p class="desc">60 questions in 60 minutes. No calculator on all — but you'll want one. Pick a topic or take a mixed drill.</p>
+        <div class="field">
+          <label for="act-topic">Topic</label>
+          <select id="act-topic">
+            <option value="all">Mixed (all topics)</option>
+            <option value="prealgebra">Pre-Algebra</option>
+            <option value="elementary">Elementary Algebra</option>
+            <option value="intermediate">Intermediate Algebra</option>
+            <option value="coordinate">Coordinate Geometry</option>
+            <option value="plane">Plane Geometry</option>
+            <option value="trig">Trigonometry</option>
+          </select>
+        </div>
+        <div class="btn-row">
+          <button class="btn" id="act-start">Start 10-question drill</button>
+          <button class="btn" id="act-reset">Reset score</button>
+        </div>
+        <div class="note">
+          <div class="k">Score</div>
+          <div class="v" id="act-score">0 / 0 correct</div>
+        </div>
+        <div class="panel-block">
+          <div class="k">ACT Math at a glance</div>
+          <div class="v" style="font-size:13px;line-height:1.7">
+            60 questions · 60 minutes · 1–36 scale<br>
+            Topics: pre-algebra (14), elementary algebra (10), intermediate algebra (9),
+            coordinate geometry (9), plane geometry (14), trig (4).
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Question</h3>
+        <p class="desc">Choose an answer, then check it.</p>
+        <div id="act-question">
+          <div class="empty">Press "Start 10-question drill" to begin.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SAT -->
+    <section id="panel-sat" class="grid hidden">
+      <div class="card">
+        <h3>SAT Math Practice</h3>
+        <p class="desc">Digital SAT: 44 questions in 70 minutes across two modules. Calculator allowed throughout.</p>
+        <div class="field">
+          <label for="sat-topic">Topic</label>
+          <select id="sat-topic">
+            <option value="all">Mixed (all topics)</option>
+            <option value="algebra">Algebra</option>
+            <option value="advanced">Advanced Math</option>
+            <option value="data">Problem Solving &amp; Data</option>
+            <option value="geometry">Geometry &amp; Trig</option>
+          </select>
+        </div>
+        <div class="btn-row">
+          <button class="btn" id="sat-start">Start 10-question drill</button>
+          <button class="btn" id="sat-reset">Reset score</button>
+        </div>
+        <div class="note">
+          <div class="k">Score</div>
+          <div class="v" id="sat-score">0 / 0 correct</div>
+        </div>
+        <div class="panel-block">
+          <div class="k">Digital SAT Math at a glance</div>
+          <div class="v" style="font-size:13px;line-height:1.7">
+            44 questions · 70 minutes · 200–800 scale<br>
+            Two modules of 22 questions each. ~75% multiple choice, ~25% student-produced response.
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Question</h3>
+        <p class="desc">Choose an answer, then check it.</p>
+        <div id="sat-question">
+          <div class="empty">Press "Start 10-question drill" to begin.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PSAT -->
+    <section id="panel-psat" class="grid hidden">
+      <div class="card">
+        <h3>PSAT / NMSQT Practice</h3>
+        <p class="desc">Same format as the SAT, slightly easier. Great for a first timed run.</p>
+        <div class="field">
+          <label for="psat-topic">Topic</label>
+          <select id="psat-topic">
+            <option value="all">Mixed (all topics)</option>
+            <option value="algebra">Algebra</option>
+            <option value="advanced">Advanced Math</option>
+            <option value="data">Problem Solving &amp; Data</option>
+            <option value="geometry">Geometry &amp; Trig</option>
+          </select>
+        </div>
+        <div class="btn-row">
+          <button class="btn" id="psat-start">Start 10-question drill</button>
+          <button class="btn" id="psat-reset">Reset score</button>
+        </div>
+        <div class="note">
+          <div class="k">Score</div>
+          <div class="v" id="psat-score">0 / 0 correct</div>
+        </div>
+        <div class="panel-block">
+          <div class="k">PSAT/NMSQT at a glance</div>
+          <div class="v" style="font-size:13px;line-height:1.7">
+            44 questions · 70 minutes · 160–760 scale<br>
+            Also used for National Merit Scholarship qualification.
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Question</h3>
+        <p class="desc">Choose an answer, then check it.</p>
+        <div id="psat-question">
+          <div class="empty">Press "Start 10-question drill" to begin.</div>
+        </div>
+      </div>
+    </section>
+
+
+<!-- ============================================================
+     SNIPPET 3 of 3 — JAVASCRIPT
+     Find:  /* ================= Init ================= */
+     Paste this ENTIRE block immediately BEFORE that line.
+     ============================================================ */
+
+  /* ================= ACT / SAT / PSAT Practice ================= */
+  var QUESTION_BANK = {
+    act: {
+      prealgebra: [
+        { q: "What is 15% of 240?", choices: ["24", "30", "36", "40"], answer: 2,
+          explain: "0.15 × 240 = 36." },
+        { q: "Simplify: 3(2x − 4) + 5x", choices: ["11x − 12", "11x − 4", "6x − 12", "11x + 12"], answer: 0,
+          explain: "3(2x − 4) = 6x − 12; add 5x → 11x − 12." },
+        { q: "A shirt costs $40 and is 25% off. What is the sale price?", choices: ["$10", "$25", "$30", "$35"], answer: 2,
+          explain: "25% of 40 = 10; 40 − 10 = 30." },
+        { q: "Which is equivalent to 0.00045 in scientific notation?", choices: ["4.5 × 10⁻⁴", "4.5 × 10⁻³", "45 × 10⁻⁵", "4.5 × 10⁴"], answer: 0,
+          explain: "Move the decimal 4 places right → 4.5 × 10⁻⁴." },
+        { q: "If 4x = 28, what is 3x + 2?", choices: ["19", "21", "23", "25"], answer: 2,
+          explain: "x = 7, so 3(7) + 2 = 23." }
+      ],
+      elementary: [
+        { q: "Solve for x: 2x + 7 = 19", choices: ["5", "6", "7", "8"], answer: 1,
+          explain: "2x = 12 → x = 6." },
+        { q: "Factor: x² − 9", choices: ["(x − 3)(x + 3)", "(x − 9)(x + 1)", "(x − 3)²", "(x + 3)²"], answer: 0,
+          explain: "Difference of squares: a² − b² = (a − b)(a + b)." },
+        { q: "The line y = 3x − 5 has a y-intercept of:", choices: ["3", "−5", "5", "−3"], answer: 1,
+          explain: "In y = mx + b, b is the y-intercept → −5." },
+        { q: "If f(x) = 2x² − 1, what is f(3)?", choices: ["17", "11", "35", "5"], answer: 0,
+          explain: "2(9) − 1 = 17." },
+        { q: "Simplify: (x³)(x⁴)", choices: ["x⁷", "x¹²", "2x⁷", "x"], answer: 0,
+          explain: "Multiply powers with the same base: add exponents." }
+      ],
+      intermediate: [
+        { q: "Solve: x² − 5x + 6 = 0", choices: ["x = 2, 3", "x = −2, −3", "x = 1, 6", "x = −1, −6"], answer: 0,
+          explain: "Factors to (x − 2)(x − 3) = 0." },
+        { q: "What is the vertex of y = (x − 2)² + 3?", choices: ["(2, 3)", "(−2, 3)", "(2, −3)", "(3, 2)"], answer: 0,
+          explain: "Vertex form y = (x − h)² + k → vertex (h, k) = (2, 3)." },
+        { q: "If log₂(x) = 5, what is x?", choices: ["25", "32", "10", "16"], answer: 1,
+          explain: "2⁵ = 32." },
+        { q: "Solve the system: x + y = 10, x − y = 4", choices: ["(7, 3)", "(3, 7)", "(5, 5)", "(6, 4)"], answer: 0,
+          explain: "Add equations: 2x = 14 → x = 7, then y = 3." },
+        { q: "Simplify: (2x³)²", choices: ["4x⁶", "2x⁶", "4x⁵", "4x⁹"], answer: 0,
+          explain: "Square both: 2² = 4 and (x³)² = x⁶." }
+      ],
+      coordinate: [
+        { q: "What is the distance between (1, 2) and (4, 6)?", choices: ["3", "4", "5", "7"], answer: 2,
+          explain: "√(3² + 4²) = √25 = 5." },
+        { q: "The midpoint of (2, 8) and (6, 4) is:", choices: ["(4, 6)", "(8, 12)", "(3, 5)", "(4, 5)"], answer: 0,
+          explain: "Average the coordinates: ((2+6)/2, (8+4)/2) = (4, 6)." },
+        { q: "What is the slope of the line through (0, 0) and (3, 9)?", choices: ["1/3", "3", "6", "9"], answer: 1,
+          explain: "(9 − 0)/(3 − 0) = 3." },
+        { q: "Which line is perpendicular to y = 2x + 1?", choices: ["y = −½x + 3", "y = 2x − 4", "y = ½x + 1", "y = −2x + 5"], answer: 0,
+          explain: "Perpendicular slopes are negative reciprocals: −1/2." },
+        { q: "The circle (x − 3)² + (y + 2)² = 16 has center:", choices: ["(3, −2)", "(−3, 2)", "(3, 2)", "(−3, −2)"], answer: 0,
+          explain: "Center is (h, k) = (3, −2)." }
+      ],
+      plane: [
+        { q: "A rectangle is 8 by 5. What is its area?", choices: ["13", "26", "40", "80"], answer: 2,
+          explain: "A = l × w = 8 × 5 = 40." },
+        { q: "The angles of a triangle sum to:", choices: ["90°", "180°", "270°", "360°"], answer: 1,
+          explain: "Every triangle's interior angles sum to 180°." },
+        { q: "A circle has radius 6. What is its area?", choices: ["12π", "36π", "6π", "18π"], answer: 1,
+          explain: "A = πr² = 36π." },
+        { q: "A right triangle has legs 6 and 8. What is the hypotenuse?", choices: ["10", "12", "14", "48"], answer: 0,
+          explain: "√(36 + 64) = √100 = 10." },
+        { q: "Two similar triangles have side ratio 2:3. What is the area ratio?", choices: ["2:3", "4:9", "8:27", "1:1"], answer: 1,
+          explain: "Area ratio = (side ratio)² = 4:9." }
+      ],
+      trig: [
+        { q: "What is sin(30°)?", choices: ["1/2", "√3/2", "1", "0"], answer: 0,
+          explain: "sin 30° = 1/2." },
+        { q: "In a right triangle, cos θ = adjacent / ?", choices: ["opposite", "hypotenuse", "tangent", "area"], answer: 1,
+          explain: "SOH-CAH-TOA: cos = adjacent / hypotenuse." },
+        { q: "What is tan(45°)?", choices: ["0", "1", "√3", "1/2"], answer: 1,
+          explain: "tan 45° = 1." },
+        { q: "If sin θ = 3/5 in a right triangle, what is cos θ?", choices: ["4/5", "3/4", "5/3", "5/4"], answer: 0,
+          explain: "3-4-5 triangle: cos θ = 4/5." },
+        { q: "Which identity is correct?", choices: ["sin²θ + cos²θ = 1", "sin θ + cos θ = 1", "tan θ = cos θ / sin θ", "sin²θ − cos²θ = 1"], answer: 0,
+          explain: "Pythagorean identity." }
+      ]
+    },
+    sat: {
+      algebra: [
+        { q: "If 3x + 5 = 20, what is x?", choices: ["3", "5", "7", "15"], answer: 1,
+          explain: "3x = 15 → x = 5." },
+        { q: "Solve: 2(x − 3) = 4x + 8", choices: ["x = −7", "x = 7", "x = −1", "x = 1"], answer: 0,
+          explain: "2x − 6 = 4x + 8 → −14 = 2x → x = −7." },
+        { q: "The line y = −2x + 7 crosses the x-axis at:", choices: ["x = 3.5", "x = 7", "x = −2", "x = 2"], answer: 0,
+          explain: "Set y = 0: 0 = −2x + 7 → x = 3.5." },
+        { q: "If 5x − 2y = 10 and x = 4, what is y?", choices: ["5", "10", "2", "0"], answer: 0,
+          explain: "20 − 2y = 10 → y = 5." },
+        { q: "Which is equivalent to (x + 4)(x − 4)?", choices: ["x² − 16", "x² + 16", "x² − 8x + 16", "x² + 8x − 16"], answer: 0,
+          explain: "Difference of squares." }
+      ],
+      advanced: [
+        { q: "What is the sum of the roots of x² − 7x + 12 = 0?", choices: ["7", "12", "−7", "−12"], answer: 0,
+          explain: "Sum of roots = −b/a = 7." },
+        { q: "If f(x) = x² + 2x, what is f(−3)?", choices: ["3", "−3", "15", "−15"], answer: 0,
+          explain: "9 − 6 = 3." },
+        { q: "Simplify: (x²)³ · x⁻⁴", choices: ["x²", "x⁶", "x⁻²", "x¹⁰"], answer: 0,
+          explain: "x⁶ · x⁻⁴ = x²." },
+        { q: "The function y = 2ˣ is an example of:", choices: ["exponential growth", "linear growth", "quadratic", "inverse variation"], answer: 0,
+          explain: "Base > 1 → exponential growth." },
+        { q: "What is the remainder when x² + 3x + 2 is divided by (x + 1)?", choices: ["0", "2", "1", "−1"], answer: 0,
+          explain: "x² + 3x + 2 = (x + 1)(x + 2), so remainder is 0." }
+      ],
+      data: [
+        { q: "The mean of 4, 8, 10, 14 is:", choices: ["8", "9", "10", "12"], answer: 1,
+          explain: "(4 + 8 + 10 + 14) / 4 = 9." },
+        { q: "A bag has 3 red and 7 blue marbles. P(red) =", choices: ["3/10", "3/7", "7/10", "1/3"], answer: 0,
+          explain: "3 red out of 10 total." },
+        { q: "If the median of 2, 5, x, 9, 12 is 5, then x could be:", choices: ["4", "6", "8", "10"], answer: 0,
+          explain: "For median 5, x must be ≤ 5." },
+        { q: "A 20% increase followed by a 20% decrease gives:", choices: ["4% decrease", "no change", "4% increase", "40% decrease"], answer: 0,
+          explain: "1.2 × 0.8 = 0.96 → 4% decrease." },
+        { q: "In a scatterplot with strong positive correlation, points:", choices: ["rise left to right", "fall left to right", "form a circle", "are random"], answer: 0,
+          explain: "Positive correlation → upward trend." }
+      ],
+      geometry: [
+        { q: "A circle has circumference 10π. What is its radius?", choices: ["5", "10", "20", "2.5"], answer: 0,
+          explain: "C = 2πr → 10π = 2πr → r = 5." },
+        { q: "In a 30-60-90 triangle with short leg 4, the hypotenuse is:", choices: ["8", "4√3", "4√2", "12"], answer: 0,
+          explain: "Hypotenuse = 2 × short leg = 8." },
+        { q: "The volume of a cube with side 3 is:", choices: ["27", "9", "18", "54"], answer: 0,
+          explain: "V = s³ = 27." },
+        { q: "What is the measure of each interior angle of a regular hexagon?", choices: ["120°", "108°", "135°", "90°"], answer: 0,
+          explain: "(6 − 2) × 180 / 6 = 120°." },
+        { q: "If sin θ = 0.6, what is cos θ (θ acute)?", choices: ["0.8", "0.4", "1.0", "0.6"], answer: 0,
+          explain: "sin² + cos² = 1 → cos = 0.8." }
+      ]
+    }
+  };
+
+  QUESTION_BANK.psat = QUESTION_BANK.sat;
+
+  function makeDrill(prefix, bankKey) {
+    var topicSel = document.getElementById(prefix + "-topic");
+    var startBtn = document.getElementById(prefix + "-start");
+    var resetBtn = document.getElementById(prefix + "-reset");
+    var scoreEl = document.getElementById(prefix + "-score");
+    var questionEl = document.getElementById(prefix + "-question");
+    var state = { questions: [], index: 0, correct: 0, answered: 0 };
+
+    function pool() {
+      var bank = QUESTION_BANK[bankKey];
+      var topic = topicSel.value;
+      if (topic !== "all" && bank[topic]) return bank[topic].slice();
+      var all = [];
+      Object.keys(bank).forEach(function (k) { all = all.concat(bank[k]); });
+      return all;
+    }
+
+    function shuffle(arr) {
+      for (var i = arr.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+      }
+      return arr;
+    }
+
+    function updateScore() {
+      scoreEl.textContent = state.correct + " / " + state.answered + " correct";
+    }
+
+    function renderQuestion() {
+      if (state.index >= state.questions.length) {
+        var pct = state.answered ? Math.round(state.correct / state.answered * 100) : 0;
+        questionEl.innerHTML =
+          '<div class="panel-block"><div class="k">Drill complete</div>' +
+          '<div class="v" style="font-size:22px">' + state.correct + " / " + state.answered + " (" + pct + "%)</div></div>" +
+          '<div class="note"><div class="k">Keep going</div><div class="v">Start another drill to keep sharpening.</div></div>';
+        return;
+      }
+      var q = state.questions[state.index];
+      var choicesHtml = q.choices.map(function (c, i) {
+        return '<button class="btn" data-choice="' + i + '" style="display:block;width:100%;text-align:left;margin-bottom:8px">' +
+          String.fromCharCode(65 + i) + ". " + c + '</button>';
+      }).join("");
+      questionEl.innerHTML =
+        '<div class="panel-block"><div class="k">Question ' + (state.index + 1) + ' of ' + state.questions.length + '</div>' +
+        '<div class="v" style="font-size:16px;line-height:1.6">' + q.q + '</div></div>' +
+        '<div style="margin-top:14px">' + choicesHtml + '</div>' +
+        '<div id="' + prefix + '-feedback"></div>';
+
+      questionEl.querySelectorAll("[data-choice]").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          var picked = parseInt(btn.getAttribute("data-choice"), 10);
+          var correct = picked === q.answer;
+          if (correct) state.correct++;
+          state.answered++;
+          updateScore();
+          var fb = document.getElementById(prefix + "-feedback");
+          fb.innerHTML =
+            '<div class="' + (correct ? "note" : "warn") + '" style="margin-top:14px">' +
+            '<div class="k">' + (correct ? "Correct" : "Not quite") + '</div>' +
+            '<div class="v" style="font-size:13px;line-height:1.6">' + q.explain + '</div></div>' +
+            '<div class="btn-row" style="margin-top:12px"><button class="btn" id="' + prefix + '-next">Next question</button></div>';
+          questionEl.querySelectorAll("[data-choice]").forEach(function (b) { b.disabled = true; });
+          document.getElementById(prefix + "-next").addEventListener("click", function () {
+            state.index++;
+            renderQuestion();
+          });
+        });
+      });
+    }
+
+    startBtn.addEventListener("click", function () {
+      state.questions = shuffle(pool()).slice(0, 10);
+      state.index = 0; state.correct = 0; state.answered = 0;
+      updateScore();
+      renderQuestion();
+    });
+    resetBtn.addEventListener("click", function () {
+      state.questions = []; state.index = 0; state.correct = 0; state.answered = 0;
+      updateScore();
+      questionEl.innerHTML = '<div class="empty">Press "Start 10-question drill" to begin.</div>';
+    });
+  }
+
+  makeDrill("act", "act");
+  makeDrill("sat", "sat");
+  makeDrill("psat", "psat");

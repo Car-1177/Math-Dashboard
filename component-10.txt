@@ -1,0 +1,10 @@
+
+### Step 18. Add the login + save code
+This is the biggest step. Replace the contents of `src/App.tsx` with a working auth + save app. I'll give you the full file below.
+
+---
+
+## Part 5 — Run it
+
+### Step 19. Start the dev server
+In your terminal:

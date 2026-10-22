@@ -1,0 +1,204 @@
+  <!-- ================= Part 2: New panels ================= -->
+
+  <!-- Step-by-step solver -->
+  <div class="panel" id="panel-steps">
+    <div class="card">
+      <h2>Step-by-Step Solver</h2>
+      <p class="sub">Enter a linear equation and see every algebraic move.</p>
+      <div class="input-group">
+        <label>Equation (use x as the variable):</label>
+        <input type="text" id="steps-input" placeholder="e.g., 3(x + 2) = 4x - 5" />
+      </div>
+      <div class="card-actions">
+        <button id="steps-solve">Show Steps</button>
+        <button class="copy-btn" data-copy="steps-results">Copy</button>
+      </div>
+      <div id="steps-results"><div class="empty">Enter an equation to see the solution steps.</div></div>
+    </div>
+  </div>
+
+  <!-- Unit circle -->
+  <div class="panel" id="panel-unitcircle">
+    <div class="card">
+      <h2>Unit Circle &amp; Trig Reference</h2>
+      <p class="sub">Click any angle to see exact values.</p>
+      <div class="unit-circle-wrap">
+        <svg class="unit-circle-svg" id="uc-svg" width="300" height="300" viewBox="0 0 300 300"></svg>
+        <div class="uc-readout" id="uc-readout"></div>
+      </div>
+      <div class="uc-angle-btns" id="uc-angle-btns"></div>
+    </div>
+  </div>
+
+  <!-- Systems of equations -->
+  <div class="panel" id="panel-systems">
+    <div class="card">
+      <h2>Systems of Equations</h2>
+      <p class="sub">Solve 2×2 or 3×3 linear systems with three methods.</p>
+      <div class="input-group">
+        <label>Equations (one per line, e.g. 2x + 3y = 12):</label>
+        <textarea id="sys-input" rows="3" placeholder="2x + 3y = 12&#10;x - y = 1"></textarea>
+      </div>
+      <div class="card-actions">
+        <button id="sys-solve">Solve System</button>
+        <button class="copy-btn" data-copy="sys-results">Copy</button>
+      </div>
+      <div id="sys-results"><div class="empty">Enter two or three equations.</div></div>
+    </div>
+  </div>
+
+  <!-- Inequalities -->
+  <div class="panel" id="panel-inequalities">
+    <div class="card">
+      <h2>Inequality Solver</h2>
+      <p class="sub">Supports &lt;, &gt;, ≤, ≥ with interval notation and a number line.</p>
+      <div class="input-group">
+        <label>Inequality:</label>
+        <input type="text" id="ineq-input" placeholder="e.g., 2x + 3 > 11" />
+      </div>
+      <div class="card-actions">
+        <button id="ineq-solve">Solve</button>
+        <button class="copy-btn" data-copy="ineq-results">Copy</button>
+      </div>
+      <div id="ineq-results"><div class="empty">Enter an inequality to solve.</div></div>
+    </div>
+  </div>
+
+  <!-- Fractions -->
+  <div class="panel" id="panel-fractions">
+    <div class="card">
+      <h2>Fraction Calculator</h2>
+      <p class="sub">Exact fraction arithmetic with simplification steps.</p>
+      <div class="frac-input-row">
+        <div class="frac-box"><input type="number" id="f1n" value="1" /><input type="number" id="f1d" value="2" /></div>
+        <select id="frac-op" class="sd-num" style="width:80px">
+          <option value="+">+</option><option value="-">−</option>
+          <option value="*">×</option><option value="/">÷</option>
+        </select>
+        <div class="frac-box"><input type="number" id="f2n" value="1" /><input type="number" id="f2d" value="3" /></div>
+        <button id="frac-solve">Calculate</button>
+      </div>
+      <div id="frac-results"><div class="empty">Enter two fractions.</div></div>
+    </div>
+  </div>
+
+  <!-- Sequences -->
+  <div class="panel" id="panel-sequences">
+    <div class="card">
+      <h2>Sequences &amp; Series</h2>
+      <p class="sub">Arithmetic and geometric sequences.</p>
+      <div class="input-group">
+        <label>First few terms (comma-separated):</label>
+        <input type="text" id="seq-input" placeholder="e.g., 3, 7, 11, 15" />
+      </div>
+      <div class="input-group">
+        <label>Find the nth term where n =</label>
+        <input type="number" id="seq-n" value="10" />
+      </div>
+      <div class="card-actions">
+        <button id="seq-solve">Analyze</button>
+        <button class="copy-btn" data-copy="seq-results">Copy</button>
+      </div>
+      <div id="seq-results"><div class="empty">Enter at least three terms.</div></div>
+    </div>
+  </div>
+
+  <!-- Triangle solver -->
+  <div class="panel" id="panel-triangle">
+    <div class="card">
+      <h2>Triangle Solver</h2>
+      <p class="sub">Enter any three known parts (sides a,b,c and angles A,B,C).</p>
+      <div class="grid-3">
+        <div class="input-group"><label>Side a</label><input type="number" id="tri-a" /></div>
+        <div class="input-group"><label>Side b</label><input type="number" id="tri-b" /></div>
+        <div class="input-group"><label>Side c</label><input type="number" id="tri-c" /></div>
+        <div class="input-group"><label>Angle A (°)</label><input type="number" id="tri-A" /></div>
+        <div class="input-group"><label>Angle B (°)</label><input type="number" id="tri-B" /></div>
+        <div class="input-group"><label>Angle C (°)</label><input type="number" id="tri-C" /></div>
+      </div>
+      <div class="card-actions">
+        <button id="tri-solve">Solve Triangle</button>
+        <button class="copy-btn" data-copy="tri-results">Copy</button>
+      </div>
+      <div id="tri-results"><div class="empty">Fill in three values.</div></div>
+    </div>
+  </div>
+
+  <!-- Practice -->
+  <div class="panel" id="panel-practice">
+    <div class="card">
+      <h2>Practice Problems</h2>
+      <p class="sub">Free-response drills with tolerance checking.</p>
+      <div class="practice-card">
+        <div class="sd-controls">
+          <select id="practice-topic" class="sd-num" style="width:160px">
+            <option value="linear">Linear equations</option>
+            <option value="quadratic">Quadratic roots</option>
+            <option value="stats">Mean / median</option>
+            <option value="geometry">Geometry</option>
+            <option value="fractions">Fractions</option>
+          </select>
+          <button id="practice-new">New Problem</button>
+        </div>
+        <div class="practice-q" id="practice-q">Click "New Problem" to begin.</div>
+        <div class="sd-controls">
+          <input type="text" id="practice-answer" placeholder="Your answer" style="flex:1;min-width:160px" />
+          <button id="practice-check">Check</button>
+          <button id="practice-reveal" class="copy-btn">Show Solution</button>
+        </div>
+        <div id="practice-feedback"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Progress -->
+  <div class="panel" id="panel-progress">
+    <div class="card">
+      <h2>Your Progress</h2>
+      <p class="sub">Tracked locally in your browser.</p>
+      <div class="progress-grid" id="progress-grid"></div>
+      <div id="progress-topics" style="margin-top:20px"></div>
+      <div class="card-actions" style="margin-top:16px">
+        <button id="progress-reset" class="copy-btn">Reset Progress</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Complex numbers -->
+  <div class="panel" id="panel-complex">
+    <div class="card">
+      <h2>Complex Numbers</h2>
+      <p class="sub">Arithmetic in a + bi form.</p>
+      <div class="complex-grid">
+        <div class="input-group"><label>a₁</label><input type="number" id="c1a" value="2" /></div>
+        <div class="input-group"><label>b₁</label><input type="number" id="c1b" value="3" /></div>
+        <div class="input-group"><label>a₂</label><input type="number" id="c2a" value="1" /></div>
+        <div class="input-group"><label>b₂</label><input type="number" id="c2b" value="-4" /></div>
+      </div>
+      <div class="sd-controls" style="margin-top:10px">
+        <select id="complex-op" class="sd-num" style="width:120px">
+          <option value="+">Add</option><option value="-">Subtract</option>
+          <option value="*">Multiply</option><option value="/">Divide</option>
+        </select>
+        <button id="complex-solve">Calculate</button>
+      </div>
+      <div id="complex-results"><div class="empty">Enter two complex numbers.</div></div>
+    </div>
+  </div>
+
+  <!-- Shortcuts -->
+  <div class="panel" id="panel-shortcuts">
+    <div class="card">
+      <h2>Keyboard Shortcuts</h2>
+      <p class="sub">Active on the Calculator tab.</p>
+      <table class="shortcut-table">
+        <tr><td><span class="kbd">0-9</span></td><td>Digits</td></tr>
+        <tr><td><span class="kbd">+ - * /</span></td><td>Operators</td></tr>
+        <tr><td><span class="kbd">^</span></td><td>Exponent</td></tr>
+        <tr><td><span class="kbd">( )</span></td><td>Parentheses</td></tr>
+        <tr><td><span class="kbd">Enter</span></td><td>Evaluate</td></tr>
+        <tr><td><span class="kbd">Backspace</span></td><td>Delete last</td></tr>
+        <tr><td><span class="kbd">Esc</span></td><td>Clear all</td></tr>
+      </table>
+    </div>
+  </div>

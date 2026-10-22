@@ -1,0 +1,8 @@
+Open the localhost link. You should see a login screen. Sign up with any email + password, log in, and save a calculation. Refresh the page — it's still there. Log out and log back in — still there. That's your multi-user app working.
+
+---
+
+## Part 6 — Put it online (launch)
+
+### Step 20. Push to GitHub
+In your terminal, in the `math-app` folder:

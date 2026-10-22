@@ -1,0 +1,14 @@
+
+This creates a table and locks it so each user can only touch their own rows. **This is the part that makes it truly multi-user.**
+
+### Step 14. Turn on email login
+1. Left sidebar → **Authentication** → **Providers**
+2. Make sure **Email** is enabled (it is by default)
+3. For testing, go to **Authentication → Sign In / Providers** and turn **off** "Confirm email" so you don't have to click a confirmation link every time. (Turn it back on before real launch.)
+
+---
+
+## Part 4 — Connect the app to Supabase
+
+### Step 15. Install the Supabase library
+In your terminal (make sure you're in the `math-app` folder):

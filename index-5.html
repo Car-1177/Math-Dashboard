@@ -1,0 +1,169 @@
+  /* ================= Part 5: Sequences, Triangle, Complex ================= */
+  var seqResults = document.getElementById("seq-results");
+
+  function analyzeSequence() {
+    var terms = document.getElementById("seq-input").value.split(/[,\s]+/)
+      .map(function (x) { return parseFloat(x); }).filter(function (x) { return !isNaN(x); });
+    var n = parseInt(document.getElementById("seq-n").value, 10) || 10;
+    if (terms.length < 3) { seqResults.innerHTML = '<div class="warn">Enter at least three terms.</div>'; return; }
+
+    var diffs = [];
+    for (var i = 1; i < terms.length; i++) diffs.push(terms[i] - terms[i - 1]);
+    var isArith = diffs.every(function (d) { return Math.abs(d - diffs[0]) < 1e-9; });
+
+    var ratios = [];
+    for (var j = 1; j < terms.length; j++) {
+      if (terms[j - 1] === 0) { ratios = []; break; }
+      ratios.push(terms[j] / terms[j - 1]);
+    }
+    var isGeo = ratios.length > 0 && ratios.every(function (r) { return Math.abs(r - ratios[0]) < 1e-9; });
+
+    var html = "";
+    if (isArith) {
+      var d = diffs[0], a1 = terms[0];
+      var nth = a1 + (n - 1) * d;
+      var sumN = n * (a1 + nth) / 2;
+      html += '<div class="panel-block"><div class="k">Arithmetic sequence</div><div class="v" style="font-size:18px">aₙ = ' + fmt(a1) + ' + (n − 1)(' + fmt(d) + ')</div></div>';
+      html += '<div class="stats" style="margin-top:12px">' +
+        statCell("Common difference (d)", fmt(d), true) +
+        statCell("a" + n, fmt(nth), true) +
+        statCell("Sum of first " + n, fmt(sumN)) +
+        '</div>';
+    } else if (isGeo) {
+      var r = ratios[0], g1 = terms[0];
+      var gnth = g1 * Math.pow(r, n - 1);
+      var gsum = Math.abs(r - 1) < 1e-12 ? g1 * n : g1 * (Math.pow(r, n) - 1) / (r - 1);
+      var converges = Math.abs(r) < 1;
+      html += '<div class="panel-block"><div class="k">Geometric sequence</div><div class="v" style="font-size:18px">aₙ = ' + fmt(g1) + ' · (' + fmt(r) + ')ⁿ⁻¹</div></div>';
+      html += '<div class="stats" style="margin-top:12px">' +
+        statCell("Common ratio (r)", fmt(r), true) +
+        statCell("a" + n, fmt(gnth), true) +
+        statCell("Sum of first " + n, fmt(gsum)) +
+        statCell("Converges", converges ? "Yes" : "No") +
+        '</div>';
+      if (converges) html += '<div class="note" style="margin-top:10px"><div class="k">Infinite sum</div><div class="v">S∞ = ' + fmt(g1 / (1 - r)) + '</div></div>';
+    } else {
+      html += '<div class="warn">Not a simple arithmetic or geometric sequence.</div>';
+    }
+
+    var rows = "";
+    for (var k = 1; k <= Math.min(n, 12); k++) {
+      var val = isArith ? terms[0] + (k - 1) * diffs[0] : (isGeo ? terms[0] * Math.pow(ratios[0], k - 1) : terms[k - 1]);
+      rows += '<tr><td>' + k + '</td><td>' + (val !== undefined ? fmt(val) : "—") + '</td></tr>';
+    }
+    html += '<table class="seq-table"><tr><th>n</th><th>aₙ</th></tr>' + rows + '</table>';
+    seqResults.innerHTML = html;
+  }
+  document.getElementById("seq-solve").addEventListener("click", analyzeSequence);
+
+  /* ---- Triangle solver ---- */
+  var triResults = document.getElementById("tri-results");
+
+  function solveTriangle() {
+    var a = parseFloat(document.getElementById("tri-a").value);
+    var b = parseFloat(document.getElementById("tri-b").value);
+    var c = parseFloat(document.getElementById("tri-c").value);
+    var A = parseFloat(document.getElementById("tri-A").value);
+    var B = parseFloat(document.getElementById("tri-B").value);
+    var C = parseFloat(document.getElementById("tri-C").value);
+    var has = function (v) { return !isNaN(v); };
+    var known = [has(a), has(b), has(c), has(A), has(B), has(C)].filter(Boolean).length;
+    if (known < 3) { triResults.innerHTML = '<div class="warn">Enter at least three known values.</div>'; return; }
+
+    var D = Math.PI / 180;
+    var steps = [];
+
+    if (has(A) && has(B)) { C = 180 - A - B; steps.push("C = 180° − A − B = " + fmt(C) + "°"); }
+    else if (has(A) && has(C)) { B = 180 - A - C; steps.push("B = 180° − A − C = " + fmt(B) + "°"); }
+    else if (has(B) && has(C)) { A = 180 - B - C; steps.push("A = 180° − B − C = " + fmt(A) + "°"); }
+
+    var solved = false;
+    if (has(a) && has(b) && has(c)) {
+      A = Math.acos((b * b + c * c - a * a) / (2 * b * c)) / D;
+      B = Math.acos((a * a + c * c - b * b) / (2 * a * c)) / D;
+      C = 180 - A - B;
+      steps.push("Law of Cosines for each angle");
+      solved = true;
+    } else if (has(a) && has(b) && has(C)) {
+      c = Math.sqrt(a * a + b * b - 2 * a * b * Math.cos(C * D));
+      A = Math.asin(a * Math.sin(C * D) / c) / D;
+      B = 180 - A - C;
+      steps.push("Law of Cosines: c² = a² + b² − 2ab·cos C");
+      solved = true;
+    } else if (has(a) && has(A) && (has(B) || has(C))) {
+      var knownAngle = has(B) ? B : C;
+      var knownSide = has(B) ? b : c;
+      if (has(B) && !has(b)) b = a * Math.sin(B * D) / Math.sin(A * D);
+      if (has(C) && !has(c)) c = a * Math.sin(C * D) / Math.sin(A * D);
+      if (!has(b) && has(c)) b = c * Math.sin(B * D) / Math.sin(C * D);
+      if (!has(c) && has(b)) c = b * Math.sin(C * D) / Math.sin(B * D);
+      steps.push("Law of Sines: a/sin A = b/sin B = c/sin C");
+      solved = true;
+    } else if (has(a) && has(b) && has(A)) {
+      var sinB = b * Math.sin(A * D) / a;
+      if (Math.abs(sinB) > 1) { triResults.innerHTML = '<div class="warn">No triangle exists with these values (ambiguous case).</div>'; return; }
+      B = Math.asin(sinB) / D;
+      C = 180 - A - B;
+      c = a * Math.sin(C * D) / Math.sin(A * D);
+      steps.push("Law of Sines (SSA — ambiguous case)");
+      solved = true;
+    }
+
+    if (!solved) { triResults.innerHTML = '<div class="warn">Could not determine the triangle from these inputs.</div>'; return; }
+
+    var html = '<div class="stats">' +
+      statCell("Side a", fmt(a)) + statCell("Side b", fmt(b)) + statCell("Side c", fmt(c)) +
+      statCell("Angle A", fmt(A) + "°") + statCell("Angle B", fmt(B) + "°") + statCell("Angle C", fmt(C) + "°") +
+      '</div>';
+    var s = (a + b + c) / 2;
+    var area = Math.sqrt(Math.max(0, s * (s - a) * (s - b) * (s - c)));
+    html += '<div class="note" style="margin-top:12px"><div class="k">Derived</div><div class="v">Perimeter = ' + fmt(a + b + c) +
+      ' · Area (Heron) = ' + fmt(area) + ' · Type: ' + (a === b && b === c ? "Equilateral" : (a === b || b === c || a === c ? "Isosceles" : "Scalene")) + '</div></div>';
+    html += '<div class="steps-list" style="margin-top:12px">' + steps.map(function (st) {
+      return '<div class="step-item"><span class="math">' + st + '</span></div>';
+    }).join("") + '</div>';
+    triResults.innerHTML = html;
+  }
+  document.getElementById("tri-solve").addEventListener("click", solveTriangle);
+
+  /* ---- Complex numbers ---- */
+  var complexResults = document.getElementById("complex-results");
+
+  function complexStr(re, im) {
+    if (Math.abs(im) < 1e-12) return fmt(re);
+    if (Math.abs(re) < 1e-12) return (im === 1 ? "" : im === -1 ? "−" : fmt(im)) + "i";
+    return fmt(re) + (im < 0 ? " − " : " + ") + (Math.abs(im) === 1 ? "" : fmt(Math.abs(im))) + "i";
+  }
+
+  function calcComplex() {
+    var a1 = parseFloat(document.getElementById("c1a").value) || 0;
+    var b1 = parseFloat(document.getElementById("c1b").value) || 0;
+    var a2 = parseFloat(document.getElementById("c2a").value) || 0;
+    var b2 = parseFloat(document.getElementById("c2b").value) || 0;
+    var op = document.getElementById("complex-op").value;
+    var re, im, steps = [];
+
+    steps.push({ math: "(" + complexStr(a1, b1) + ") " + op + " (" + complexStr(a2, b2) + ")", why: "Original" });
+
+    if (op === "+") { re = a1 + a2; im = b1 + b2; steps.push({ math: "(" + fmt(a1 + a2) + ") + (" + fmt(b1 + b2) + ")i", why: "Add real and imaginary parts" }); }
+    else if (op === "-") { re = a1 - a2; im = b1 - b2; steps.push({ math: "(" + fmt(a1 - a2) + ") + (" + fmt(b1 - b2) + ")i", why: "Subtract real and imaginary parts" }); }
+    else if (op === "*") {
+      re = a1 * a2 - b1 * b2; im = a1 * b2 + b1 * a2;
+      steps.push({ math: "(" + fmt(a1) + "·" + fmt(a2) + " − " + fmt(b1) + "·" + fmt(b2) + ") + (" + fmt(a1) + "·" + fmt(b2) + " + " + fmt(b1) + "·" + fmt(a2) + ")i", why: "FOIL, using i² = −1" });
+    } else {
+      var den = a2 * a2 + b2 * b2;
+      if (den === 0) { complexResults.innerHTML = '<div class="warn">Cannot divide by zero.</div>'; return; }
+      re = (a1 * a2 + b1 * b2) / den; im = (b1 * a2 - a1 * b2) / den;
+      steps.push({ math: "Multiply by conjugate (" + complexStr(a2, -b2) + ") / (" + complexStr(a2, -b2) + ")", why: "Rationalize the denominator" });
+    }
+
+    var html = '<div class="steps-list">' + steps.map(function (st) {
+      return '<div class="step-item"><span class="math">' + st.math + '</span><div class="why">' + st.why + '</div></div>';
+    }).join("") + '</div>';
+    html += '<div class="panel-block" style="margin-top:14px"><div class="k">Result</div><div class="v" style="font-size:22px">' + complexStr(re, im) + '</div></div>';
+    var mod = Math.sqrt(re * re + im * im);
+    var arg = Math.atan2(im, re) / (Math.PI / 180);
+    html += '<div class="note" style="margin-top:10px"><div class="k">Polar form</div><div class="v">r = ' + fmt(mod) + ' · θ = ' + fmt(arg) + '°</div></div>';
+    complexResults.innerHTML = html;
+  }
+  document.getElementById("complex-solve").addEventListener("click", calcComplex);

@@ -1,0 +1,162 @@
+  /* ================= Part 3: Steps + Unit Circle ================= */
+  function gcdInt(a, b) {
+    a = Math.abs(Math.round(a)); b = Math.abs(Math.round(b));
+    while (b) { var t = b; b = a % b; a = t; }
+    return a || 1;
+  }
+  function lcmInt(a, b) { return Math.abs(a * b) / gcdInt(a, b); }
+
+  function copyToClipboard(text, btn) {
+    navigator.clipboard.writeText(text).then(function () {
+      if (btn) { btn.classList.add("done"); btn.textContent = "Copied!"; 
+        setTimeout(function () { btn.classList.remove("done"); btn.textContent = "Copy"; }, 1200); }
+    });
+  }
+  document.querySelectorAll("[data-copy]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var el = document.getElementById(btn.getAttribute("data-copy"));
+      copyToClipboard(el ? el.innerText : "", btn);
+    });
+  });
+
+  /* ---- Step-by-step linear solver ---- */
+  var stepsInput = document.getElementById("steps-input");
+  var stepsResults = document.getElementById("steps-results");
+
+  function solveLinearSteps(text) {
+    var parts = text.split("=");
+    if (parts.length !== 2) return { error: 'Equation must contain exactly one "=" sign.' };
+    var left = parts[0], right = parts[1];
+    var varName = "x";
+    var m = (left + right).match(/[a-zA-Z]/);
+    if (m) varName = m[0];
+
+    function parseSide(s) {
+      var cleaned = s.replace(/\s+/g, "").replace(/-/g, "+-");
+      var terms = cleaned.split("+").filter(function (p) { return p.length; });
+      var coef = 0, constant = 0;
+      for (var i = 0; i < terms.length; i++) {
+        var t = terms[i];
+        if (t.indexOf(varName) >= 0) {
+          var cs = t.replace(varName, "");
+          if (cs === "" || cs === "+") coef += 1;
+          else if (cs === "-") coef -= 1;
+          else coef += parseFloat(cs);
+        } else {
+          constant += parseFloat(t);
+        }
+      }
+      return { coef: coef, constant: constant };
+    }
+
+    var L, R;
+    try { L = parseSide(left); R = parseSide(right); }
+    catch (e) { return { error: "Could not parse the equation." }; }
+    if (isNaN(L.coef) || isNaN(L.constant) || isNaN(R.coef) || isNaN(R.constant))
+      return { error: "Could not parse the equation." };
+
+    var steps = [];
+    steps.push({ math: left.trim() + " = " + right.trim(), why: "Original equation" });
+
+    if (R.coef !== 0) {
+      steps.push({
+        math: L.coef + varName + " − " + R.coef + varName + " = " + R.constant + " − " + L.constant,
+        why: "Move all " + varName + " terms to the left, constants to the right"
+      });
+    }
+    var combinedCoef = L.coef - R.coef;
+    var combinedConst = R.constant - L.constant;
+    steps.push({ math: combinedCoef + varName + " = " + combinedConst, why: "Combine like terms" });
+
+    if (combinedCoef === 0) {
+      if (combinedConst === 0) return { steps: steps, result: "Identity — true for all " + varName };
+      return { steps: steps, result: "No solution — the equation is inconsistent" };
+    }
+    var answer = combinedConst / combinedCoef;
+    steps.push({ math: varName + " = " + combinedConst + " ÷ " + combinedCoef, why: "Divide both sides by " + combinedCoef });
+    steps.push({ math: varName + " = " + fmt(answer), why: "Solution" });
+    return { steps: steps, result: varName + " = " + fmt(answer) };
+  }
+
+  function renderSteps() {
+    var text = stepsInput.value.trim();
+    if (!text) { stepsResults.innerHTML = '<div class="empty">Enter an equation to see the solution steps.</div>'; return; }
+    var out = solveLinearSteps(text);
+    if (out.error) { stepsResults.innerHTML = '<div class="warn">' + out.error + '</div>'; return; }
+    var html = '<div class="steps-list">' + out.steps.map(function (s) {
+      return '<div class="step-item"><span class="math">' + s.math + '</span><div class="why">' + s.why + '</div></div>';
+    }).join("") + '</div>';
+    html += '<div class="panel-block" style="margin-top:14px"><div class="k">Answer</div><div class="v" style="font-size:20px">' + out.result + '</div></div>';
+    stepsResults.innerHTML = html;
+  }
+  document.getElementById("steps-solve").addEventListener("click", renderSteps);
+  stepsInput.addEventListener("keydown", function (e) { if (e.key === "Enter") renderSteps(); });
+
+  /* ---- Unit circle ---- */
+  var ucSvg = document.getElementById("uc-svg");
+  var ucReadout = document.getElementById("uc-readout");
+  var ucBtns = document.getElementById("uc-angle-btns");
+  var UC_ANGLES = [0, 30, 45, 60, 90, 120, 135, 150, 180, 210, 225, 240, 270, 300, 315, 330];
+  var ucSelected = 45;
+
+  function ucExact(deg) {
+    var map = {
+      0: ["0", "1", "0"], 30: ["1/2", "√3/2", "√3/3"], 45: ["√2/2", "√2/2", "1"],
+      60: ["√3/2", "1/2", "√3"], 90: ["1", "0", "undefined"], 120: ["√3/2", "−1/2", "−√3"],
+      135: ["√2/2", "−√2/2", "−1"], 150: ["1/2", "−√3/2", "−√3/3"], 180: ["0", "−1", "0"],
+      210: ["−1/2", "−√3/2", "√3/3"], 225: ["−√2/2", "−√2/2", "1"], 240: ["−√3/2", "−1/2", "√3"],
+      270: ["−1", "0", "undefined"], 300: ["−√3/2", "1/2", "−√3"], 315: ["−√2/2", "√2/2", "−1"],
+      330: ["−1/2", "√3/2", "−√3/3"]
+    };
+    return map[deg] || null;
+  }
+
+  function drawUnitCircle() {
+    var cx = 150, cy = 150, r = 110;
+    var html = '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="none" stroke="#182a4a" stroke-width="2"/>';
+    html += '<line x1="' + (cx - r - 15) + '" y1="' + cy + '" x2="' + (cx + r + 15) + '" y2="' + cy + '" stroke="#3b82f6" stroke-width="1.5"/>';
+    html += '<line x1="' + cx + '" y1="' + (cy - r - 15) + '" x2="' + cx + '" y2="' + (cy + r + 15) + '" stroke="#3b82f6" stroke-width="1.5"/>';
+    UC_ANGLES.forEach(function (deg) {
+      var rad = deg * Math.PI / 180;
+      var x = cx + r * Math.cos(rad), y = cy - r * Math.sin(rad);
+      var sel = deg === ucSelected;
+      html += '<circle cx="' + x + '" cy="' + y + '" r="' + (sel ? 7 : 4) + '" fill="' + (sel ? "#38bdf8" : "#1d4ed8") + '" stroke="#050b1a" stroke-width="1.5" style="cursor:pointer" data-uc="' + deg + '"/>';
+    });
+    var srad = ucSelected * Math.PI / 180;
+    var sx = cx + r * Math.cos(srad), sy = cy - r * Math.sin(srad);
+    html += '<line x1="' + cx + '" y1="' + cy + '" x2="' + sx + '" y2="' + sy + '" stroke="#38bdf8" stroke-width="2.5"/>';
+    html += '<circle cx="' + sx + '" cy="' + sy + '" r="6" fill="#38bdf8"/>';
+    ucSvg.innerHTML = html;
+    ucSvg.querySelectorAll("[data-uc]").forEach(function (el) {
+      el.addEventListener("click", function () {
+        ucSelected = parseInt(el.getAttribute("data-uc"), 10);
+        drawUnitCircle(); renderUcReadout();
+      });
+    });
+  }
+
+  function renderUcReadout() {
+    var deg = ucSelected, rad = deg * Math.PI / 180;
+    var exact = ucExact(deg);
+    var sinV = Math.sin(rad), cosV = Math.cos(rad);
+    var tanV = Math.abs(cosV) < 1e-12 ? null : Math.tan(rad);
+    var radLabel = (deg === 0 ? "0" : deg + "°") + " = " + fmt(rad) + " rad";
+    var html = '<div class="panel-block"><div class="k">Angle</div><div class="v" style="font-size:20px">' + radLabel + '</div></div>';
+    html += '<div class="stats" style="margin-top:12px">' +
+      statCell("sin θ", exact ? exact[0] : fmt(sinV)) +
+      statCell("cos θ", exact ? exact[1] : fmt(cosV)) +
+      statCell("tan θ", exact ? exact[2] : (tanV === null ? "undefined" : fmt(tanV))) +
+      '</div>';
+    html += '<div class="note" style="margin-top:12px"><div class="k">Decimal values</div><div class="v">sin = ' + fmt(sinV) + ' · cos = ' + fmt(cosV) + ' · tan = ' + (tanV === null ? "undefined" : fmt(tanV)) + '</div></div>';
+    ucReadout.innerHTML = html;
+  }
+
+  UC_ANGLES.forEach(function (deg) {
+    var b = document.createElement("button");
+    b.className = "chip";
+    b.textContent = deg + "°";
+    b.addEventListener("click", function () { ucSelected = deg; drawUnitCircle(); renderUcReadout(); });
+    ucBtns.appendChild(b);
+  });
+  drawUnitCircle();
+  renderUcReadout();

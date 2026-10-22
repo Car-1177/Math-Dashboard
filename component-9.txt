@@ -1,0 +1,8 @@
+
+4. Save (Ctrl+S / Cmd+S)
+
+⚠️ The `VITE_` prefix is required. Without it, the browser can't read these.
+
+### Step 17. Create the Supabase client file
+1. In VS Code, inside the `src` folder, create a new file: `supabase.ts`
+2. Paste:

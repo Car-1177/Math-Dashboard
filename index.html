@@ -1,0 +1,461 @@
+  /* ================= Growth & Interest ================= */
+  var grMode = document.getElementById("gr-mode");
+  var grP = document.getElementById("gr-p"), grR = document.getElementById("gr-r");
+  var grN = document.getElementById("gr-n"), grT = document.getElementById("gr-t");
+  var grFormula = document.getElementById("gr-formula");
+  var grResults = document.getElementById("gr-results");
+
+  function renderGrowth() {
+    var mode = grMode.value;
+    var P = parseFloat(grP.value), r = parseFloat(grR.value);
+    var n = parseFloat(grN.value), t = parseFloat(grT.value);
+    var formulas = {
+      compound: "A = P(1 + r/n)^(nt)",
+      simple: "A = P(1 + rt)",
+      continuous: "A = Pe^(rt)",
+      exp: "y = a·b^x"
+    };
+    grFormula.textContent = formulas[mode];
+
+    if ([P, r, n, t].some(function (v) { return isNaN(v); })) {
+      grResults.innerHTML = '<div class="warn">Enter valid numbers for all fields.</div>';
+      return;
+    }
+
+    var A, extra = "";
+    if (mode === "compound") {
+      if (n === 0) { grResults.innerHTML = '<div class="warn">n cannot be 0.</div>'; return; }
+      A = P * Math.pow(1 + r / n, n * t);
+      var eff = Math.pow(1 + r / n, n) - 1;
+      extra = statCell("Effective annual rate", fmt(eff * 100) + "%");
+    } else if (mode === "simple") {
+      A = P * (1 + r * t);
+      extra = statCell("Interest earned", fmt(A - P));
+    } else if (mode === "continuous") {
+      A = P * Math.exp(r * t);
+      extra = statCell("Effective annual rate", fmt((Math.exp(r) - 1) * 100) + "%");
+    } else {
+      A = P * Math.pow(r, t);
+      extra = statCell("Growth factor", fmt(r));
+    }
+
+    grResults.innerHTML = '<div class="stats">' +
+      statCell("Final amount", fmt(A), true) +
+      statCell("Principal / a", fmt(P)) +
+      statCell("Total change", fmt(A - P), true) +
+      extra +
+      '</div>';
+  }
+  [grMode, grP, grR, grN, grT].forEach(function (el) { el.addEventListener("input", renderGrowth); });
+  grMode.addEventListener("change", renderGrowth);
+
+  /* ================= Geometry ================= */
+  var SHAPES = {
+    rectangle: { name: "Rectangle", fields: [["w", "Width"], ["h", "Height"]], calc: function (v) {
+      return [["Area", v.w * v.h], ["Perimeter", 2 * (v.w + v.h)], ["Diagonal", Math.sqrt(v.w * v.w + v.h * v.h)]];
+    }},
+    triangle: { name: "Triangle (base & height)", fields: [["b", "Base"], ["h", "Height"]], calc: function (v) {
+      return [["Area", 0.5 * v.b * v.h]];
+    }},
+    circle: { name: "Circle", fields: [["r", "Radius"]], calc: function (v) {
+      return [["Area", Math.PI * v.r * v.r], ["Circumference", 2 * Math.PI * v.r], ["Diameter", 2 * v.r]];
+    }},
+    trapezoid: { name: "Trapezoid", fields: [["a", "Base a"], ["b", "Base b"], ["h", "Height"]], calc: function (v) {
+      return [["Area", 0.5 * (v.a + v.b) * v.h]];
+    }},
+    sphere: { name: "Sphere", fields: [["r", "Radius"]], calc: function (v) {
+      return [["Volume", (4 / 3) * Math.PI * Math.pow(v.r, 3)], ["Surface area", 4 * Math.PI * v.r * v.r]];
+    }},
+    cylinder: { name: "Cylinder", fields: [["r", "Radius"], ["h", "Height"]], calc: function (v) {
+      return [["Volume", Math.PI * v.r * v.r * v.h], ["Lateral area", 2 * Math.PI * v.r * v.h], ["Surface area", 2 * Math.PI * v.r * (v.r + v.h)]];
+    }},
+    cone: { name: "Cone", fields: [["r", "Radius"], ["h", "Height"]], calc: function (v) {
+      var slant = Math.sqrt(v.r * v.r + v.h * v.h);
+      return [["Volume", (1 / 3) * Math.PI * v.r * v.r * v.h], ["Slant height", slant], ["Surface area", Math.PI * v.r * (v.r + slant)]];
+    }},
+    box: { name: "Rectangular Box", fields: [["l", "Length"], ["w", "Width"], ["h", "Height"]], calc: function (v) {
+      return [["Volume", v.l * v.w * v.h], ["Surface area", 2 * (v.l * v.w + v.l * v.h + v.w * v.h)], ["Space diagonal", Math.sqrt(v.l * v.l + v.w * v.w + v.h * v.h)]];
+    }},
+    pythag: { name: "Right Triangle (Pythagorean)", fields: [["a", "Leg a"], ["b", "Leg b"]], calc: function (v) {
+      var c = Math.sqrt(v.a * v.a + v.b * v.b);
+      return [["Hypotenuse c", c], ["Area", 0.5 * v.a * v.b], ["Perimeter", v.a + v.b + c]];
+    }}
+  };
+
+  var geoShape = document.getElementById("geo-shape");
+  var geoFields = document.getElementById("geo-fields");
+  var geoResults = document.getElementById("geo-results");
+
+  Object.keys(SHAPES).forEach(function (key) {
+    var o = document.createElement("option");
+    o.value = key; o.textContent = SHAPES[key].name;
+    geoShape.appendChild(o);
+  });
+
+  function renderGeoFields() {
+    var shape = SHAPES[geoShape.value];
+    geoFields.innerHTML = shape.fields.map(function (f) {
+      return '<div class="field"><label for="geo-' + f[0] + '">' + f[1] + '</label>' +
+        '<input id="geo-' + f[0] + '" type="number" value="5" /></div>';
+    }).join("");
+    geoFields.querySelectorAll("input").forEach(function (el) { el.addEventListener("input", renderGeo); });
+    renderGeo();
+  }
+
+  function renderGeo() {
+    var shape = SHAPES[geoShape.value];
+    var vals = {};
+    var ok = true;
+    shape.fields.forEach(function (f) {
+      var el = document.getElementById("geo-" + f[0]);
+      var v = el ? parseFloat(el.value) : NaN;
+      if (isNaN(v)) ok = false;
+      vals[f[0]] = v;
+    });
+    if (!ok) {
+      geoResults.innerHTML = '<div class="warn">Enter valid numbers for all dimensions.</div>';
+      return;
+    }
+    var out = shape.calc(vals);
+    geoResults.innerHTML = '<div class="stats">' +
+      out.map(function (o, i) { return statCell(o[0], fmt(o[1]), i === 0); }).join("") +
+      '</div>';
+  }
+  geoShape.addEventListener("change", renderGeoFields);
+
+  /* ================= Unit Converter ================= */
+  var UNITS = {
+    length: { name: "Length", units: { m: 1, km: 1000, cm: 0.01, mm: 0.001, mi: 1609.344, yd: 0.9144, ft: 0.3048, in: 0.0254 } },
+    mass: { name: "Mass", units: { kg: 1, g: 0.001, mg: 0.000001, lb: 0.45359237, oz: 0.028349523125, t: 1000 } },
+    volume: { name: "Volume", units: { L: 1, mL: 0.001, gal: 3.785411784, qt: 0.946352946, pt: 0.473176473, cup: 0.2365882365, floz: 0.0295735295625 } },
+    area: { name: "Area", units: { m2: 1, km2: 1000000, cm2: 0.0001, ft2: 0.09290304, in2: 0.00064516, acre: 4046.8564224, ha: 10000 } },
+    speed: { name: "Speed", units: { mps: 1, kph: 0.277777778, mph: 0.44704, knot: 0.514444444 } },
+    time: { name: "Time", units: { s: 1, min: 60, h: 3600, day: 86400, week: 604800 } },
+    temperature: { name: "Temperature", special: true, units: { C: 1, F: 1, K: 1 } }
+  };
+
+  var cvCat = document.getElementById("cv-cat");
+  var cvFrom = document.getElementById("cv-from");
+  var cvTo = document.getElementById("cv-to");
+  var cvValue = document.getElementById("cv-value");
+  var cvResult = document.getElementById("cv-result");
+  var cvDetail = document.getElementById("cv-detail");
+
+  Object.keys(UNITS).forEach(function (k) {
+    var o = document.createElement("option");
+    o.value = k; o.textContent = UNITS[k].name;
+    cvCat.appendChild(o);
+  });
+
+  function fillUnitSelects() {
+    var cat = UNITS[cvCat.value];
+    var keys = Object.keys(cat.units);
+    cvFrom.innerHTML = keys.map(function (k) { return '<option value="' + k + '">' + k + '</option>'; }).join("");
+    cvTo.innerHTML = keys.map(function (k) { return '<option value="' + k + '">' + k + '</option>'; }).join("");
+    cvTo.value = keys[1] || keys[0];
+    renderConvert();
+  }
+
+  function toCelsius(v, u) {
+    if (u === "C") return v;
+    if (u === "F") return (v - 32) * 5 / 9;
+    return v - 273.15;
+  }
+  function fromCelsius(c, u) {
+    if (u === "C") return c;
+    if (u === "F") return c * 9 / 5 + 32;
+    return c + 273.15;
+  }
+
+  function renderConvert() {
+    var cat = UNITS[cvCat.value];
+    var v = parseFloat(cvValue.value);
+    if (isNaN(v)) { cvResult.textContent = "—"; cvDetail.textContent = "—"; return; }
+    var out;
+    if (cat.special) {
+      out = fromCelsius(toCelsius(v, cvFrom.value), cvTo.value);
+    } else {
+      var base = v * cat.units[cvFrom.value];
+      out = base / cat.units[cvTo.value];
+    }
+    cvResult.textContent = fmt(out) + " " + cvTo.value;
+    cvDetail.textContent = fmt(v) + " " + cvFrom.value + " = " + fmt(out) + " " + cvTo.value;
+  }
+  cvCat.addEventListener("change", fillUnitSelects);
+  [cvFrom, cvTo, cvValue].forEach(function (el) { el.addEventListener("input", renderConvert); });
+  cvFrom.addEventListener("change", renderConvert);
+  cvTo.addEventListener("change", renderConvert);
+  document.getElementById("cv-swap").addEventListener("click", function () {
+    var a = cvFrom.value; cvFrom.value = cvTo.value; cvTo.value = a; renderConvert();
+  });
+
+  /* ================= Reference ================= */
+  var REF = [
+    { cat: "Algebra", items: [
+      { name: "Quadratic Formula", f: "x = (−b ± √(b² − 4ac)) / 2a", use: "Roots of ax² + bx + c = 0." },
+      { name: "Discriminant", f: "Δ = b² − 4ac", use: "Δ>0 two real, Δ=0 one, Δ<0 complex." },
+      { name: "Slope", f: "m = (y₂ − y₁) / (x₂ − x₁)", use: "Steepness of a line." },
+      { name: "Slope-Intercept", f: "y = mx + b", use: "Line with slope m, y-intercept b." },
+      { name: "Point-Slope", f: "y − y₁ = m(x − x₁)", use: "Line through a point with slope m." },
+      { name: "Difference of Squares", f: "a² − b² = (a + b)(a − b)", use: "Factor binomials." },
+      { name: "Perfect Square", f: "a² ± 2ab + b² = (a ± b)²", use: "Factor trinomials." },
+      { name: "Exponent Product", f: "aᵐ · aⁿ = aᵐ⁺ⁿ", use: "Multiply like bases." },
+      { name: "Exponent Power", f: "(aᵐ)ⁿ = aᵐⁿ", use: "Power of a power." },
+      { name: "Log Product", f: "log(xy) = log x + log y", use: "Expand logs." },
+      { name: "Log Quotient", f: "log(x/y) = log x − log y", use: "Condense logs." },
+      { name: "Change of Base", f: "log_b(x) = ln x / ln b", use: "Any base from natural log." }
+    ]},
+    { cat: "Coordinate Geometry", items: [
+      { name: "Distance", f: "d = √((x₂−x₁)² + (y₂−y₁)²)", use: "Between two points." },
+      { name: "Midpoint", f: "M = ((x₁+x₂)/2, (y₁+y₂)/2)", use: "Center of a segment." },
+      { name: "Circle", f: "(x − h)² + (y − k)² = r²", use: "Center (h,k), radius r." },
+      { name: "Parallel Lines", f: "m₁ = m₂", use: "Same slope." },
+      { name: "Perpendicular Lines", f: "m₁ · m₂ = −1", use: "Negative reciprocal slopes." }
+    ]},
+    { cat: "Plane Geometry", items: [
+      { name: "Rectangle Area", f: "A = l · w", use: "Length times width." },
+      { name: "Triangle Area", f: "A = ½ · b · h", use: "Half base times height." },
+      { name: "Circle Area", f: "A = πr²", use: "Radius squared times π." },
+      { name: "Circumference", f: "C = 2πr", use: "Distance around a circle." },
+      { name: "Trapezoid Area", f: "A = ½(a + b)h", use: "Average bases times height." },
+      { name: "Pythagorean", f: "a² + b² = c²", use: "Right triangle sides." },
+      { name: "Box Volume", f: "V = l · w · h", use: "Rectangular solid." },
+      { name: "Cylinder Volume", f: "V = πr²h", use: "Circular solid." },
+      { name: "Sphere Volume", f: "V = (4/3)πr³", use: "Ball volume." },
+      { name: "Cone Volume", f: "V = (1/3)πr²h", use: "Cone volume." }
+    ]},
+    { cat: "Trigonometry", items: [
+      { name: "SOH CAH TOA", f: "sin = opp/hyp, cos = adj/hyp, tan = opp/adj", use: "Right triangle ratios." },
+      { name: "Pythagorean Identity", f: "sin²θ + cos²θ = 1", use: "Fundamental identity." },
+      { name: "Law of Sines", f: "a/sin A = b/sin B = c/sin C", use: "Any triangle." },
+      { name: "Law of Cosines", f: "c² = a² + b² − 2ab·cos C", use: "Any triangle." },
+      { name: "Radian Conversion", f: "180° = π radians", use: "Angle units." }
+    ]},
+    { cat: "Statistics & Growth", items: [
+      { name: "Mean", f: "x̄ = Σx / n", use: "Average." },
+      { name: "Variance", f: "σ² = Σ(x − x̄)² / n", use: "Spread of data." },
+      { name: "Std Dev", f: "σ = √σ²", use: "Typical distance from mean." },
+      { name: "Compound Interest", f: "A = P(1 + r/n)^(nt)", use: "Interest compounded n times/year." },
+      { name: "Continuous Interest", f: "A = Pe^(rt)", use: "Continuous compounding." },
+      { name: "Exponential Growth", f: "y = a·bˣ", use: "Growth (b>1) or decay (0<b<1)." },
+      { name: "Z-Score", f: "z = (x − μ) / σ", use: "Standard deviations from mean." }
+    ]}
+  ];
+
+  var refContent = document.getElementById("ref-content");
+  refContent.innerHTML = REF.map(function (group) {
+    return '<div class="ref-cat"><h4>' + group.cat + '</h4><div class="ref-grid">' +
+      group.items.map(function (it) {
+        return '<div class="ref-item"><div class="name">' + it.name + '</div>' +
+          '<div class="formula">' + it.f + '</div><div class="use">' + it.use + '</div></div>';
+      }).join("") + '</div></div>';
+  }).join("");
+
+  var CONST_LIST = [
+    ["π", fmt(Math.PI)], ["e", fmt(Math.E)], ["φ (golden)", fmt((1 + Math.sqrt(5)) / 2)],
+    ["√2", fmt(Math.SQRT2)], ["√3", fmt(Math.sqrt(3))], ["√5", fmt(Math.sqrt(5))],
+    ["1 radian", "≈ 57.2958°"], ["1°", "≈ 0.01745 rad"], ["1 mile", "1609.344 m"],
+    ["1 inch", "2.54 cm"], ["1 kg", "2.20462 lb"], ["1 gallon", "3.78541 L"]
+  ];
+  document.getElementById("ref-constants").innerHTML = CONST_LIST.map(function (c) {
+    return '<div class="ref-item"><div class="name">' + c[0] + '</div><div class="formula">' + c[1] + '</div></div>';
+  }).join("");
+
+  /* ================= Test Drills (ACT / SAT / PSAT) ================= */
+  var QUESTION_BANK = {
+    prealgebra: [
+      { q: "What is 15% of 240?", choices: ["24", "36", "32", "40"], answer: 1, exp: "0.15 × 240 = 36." },
+      { q: "Simplify: 3(2x + 4) − 5x", choices: ["x + 12", "11x + 12", "x + 4", "6x + 12"], answer: 0, exp: "6x + 12 − 5x = x + 12." },
+      { q: "The ratio 3:5 is equivalent to which fraction?", choices: ["3/8", "5/8", "3/5", "5/3"], answer: 2, exp: "3:5 means 3/5." },
+      { q: "If a shirt costs $40 and is 25% off, what is the sale price?", choices: ["$10", "$30", "$35", "$25"], answer: 1, exp: "40 × 0.75 = $30." },
+      { q: "What is the least common multiple of 6 and 8?", choices: ["12", "24", "48", "16"], answer: 1, exp: "LCM(6,8) = 24." }
+    ],
+    elementary: [
+      { q: "Solve for x: 4x − 7 = 21", choices: ["5", "6", "7", "8"], answer: 2, exp: "4x = 28, x = 7." },
+      { q: "Factor: x² − 9", choices: ["(x−3)(x−3)", "(x+3)(x+3)", "(x−3)(x+3)", "(x−9)(x+1)"], answer: 2, exp: "Difference of squares." },
+      { q: "If 2x + 3y = 12 and x = 3, what is y?", choices: ["1", "2", "3", "4"], answer: 1, exp: "6 + 3y = 12, y = 2." },
+      { q: "Simplify: (x³)(x⁴)", choices: ["x⁷", "x¹²", "x⁻¹", "2x⁷"], answer: 0, exp: "Add exponents: 3 + 4 = 7." },
+      { q: "The slope of the line through (1,2) and (3,8) is:", choices: ["2", "3", "4", "6"], answer: 1, exp: "(8−2)/(3−1) = 3." }
+    ],
+    intermediate: [
+      { q: "Solve: x² − 5x + 6 = 0", choices: ["x = 2, 3", "x = −2, −3", "x = 1, 6", "x = −1, −6"], answer: 0, exp: "(x−2)(x−3) = 0." },
+      { q: "If f(x) = 2x² − 3, what is f(−2)?", choices: ["5", "−11", "11", "−5"], answer: 0, exp: "2(4) − 3 = 5." },
+      { q: "Simplify: (x² − 4)/(x − 2)", choices: ["x − 2", "x + 2", "x² + 2", "x − 4"], answer: 1, exp: "Factor: (x−2)(x+2)/(x−2) = x + 2." },
+      { q: "What is the vertex of y = (x − 3)² + 2?", choices: ["(3, 2)", "(−3, 2)", "(3, −2)", "(2, 3)"], answer: 0, exp: "Vertex form: (h, k) = (3, 2)." },
+      { q: "log₂(32) = ?", choices: ["4", "5", "6", "16"], answer: 1, exp: "2⁵ = 32." }
+    ],
+    coordinate: [
+      { q: "Distance between (0,0) and (3,4):", choices: ["5", "7", "12", "25"], answer: 0, exp: "√(9+16) = 5." },
+      { q: "Midpoint of (2,4) and (8,10):", choices: ["(5,7)", "(6,7)", "(5,6)", "(4,6)"], answer: 0, exp: "((2+8)/2, (4+10)/2) = (5,7)." },
+      { q: "A line perpendicular to y = 2x + 1 has slope:", choices: ["2", "−2", "1/2", "−1/2"], answer: 3, exp: "Negative reciprocal of 2 is −1/2." },
+      { q: "Equation of circle centered at (0,0) with radius 5:", choices: ["x² + y² = 5", "x² + y² = 25", "x + y = 5", "x² − y² = 25"], answer: 1, exp: "r² = 25." },
+      { q: "The y-intercept of y = 3x − 7 is:", choices: ["3", "−7", "7", "−3"], answer: 1, exp: "b = −7." }
+    ],
+    plane: [
+      { q: "Area of a triangle with base 10 and height 6:", choices: ["60", "30", "16", "20"], answer: 1, exp: "½ × 10 × 6 = 30." },
+      { q: "Circumference of a circle with radius 7 (use π ≈ 22/7):", choices: ["22", "44", "154", "49"], answer: 1, exp: "2 × 22/7 × 7 = 44." },
+      { q: "A right triangle has legs 6 and 8. Hypotenuse = ?", choices: ["10", "12", "14", "48"], answer: 0, exp: "√(36+64) = 10." },
+      { q: "Volume of a cube with side 4:", choices: ["16", "48", "64", "12"], answer: 2, exp: "4³ = 64." },
+      { q: "Sum of interior angles of a pentagon:", choices: ["360°", "540°", "720°", "180°"], answer: 1, exp: "(5−2) × 180 = 540°." }
+    ],
+    trig: [
+      { q: "sin(30°) = ?", choices: ["1/2", "√3/2", "1", "√2/2"], answer: 0, exp: "sin 30° = 0.5." },
+      { q: "cos(60°) = ?", choices: ["1/2", "√3/2", "1", "0"], answer: 0, exp: "cos 60° = 0.5." },
+      { q: "tan(45°) = ?", choices: ["0", "1", "√3", "1/2"], answer: 1, exp: "tan 45° = 1." },
+      { q: "In a right triangle, if opp = 3 and hyp = 5, sin θ = ?", choices: ["3/5", "4/5", "5/3", "3/4"], answer: 0, exp: "sin = opp/hyp = 3/5." },
+      { q: "180° in radians is:", choices: ["π/2", "π", "2π", "π/4"], answer: 1, exp: "180° = π radians." }
+    ],
+    algebra: [
+      { q: "Solve: 3(x + 2) = 21", choices: ["x = 5", "x = 7", "x = 9", "x = 3"], answer: 0, exp: "x + 2 = 7, x = 5." },
+      { q: "If 5x − 3 = 2x + 9, then x = ?", choices: ["2", "3", "4", "6"], answer: 2, exp: "3x = 12, x = 4." },
+      { q: "Simplify: (2x²y)(3xy³)", choices: ["6x³y⁴", "5x³y⁴", "6x²y³", "6x³y³"], answer: 0, exp: "Multiply coefficients, add exponents." },
+      { q: "The line y = −2x + 5 has slope:", choices: ["5", "−2", "2", "−5"], answer: 1, exp: "Slope is the coefficient of x." },
+      { q: "If f(x) = x² + 1, f(3) = ?", choices: ["7", "9", "10", "6"], answer: 2, exp: "9 + 1 = 10." }
+    ],
+    advanced: [
+      { q: "Solve: x² + 4x + 4 = 0", choices: ["x = 2", "x = −2", "x = ±2", "No solution"], answer: 1, exp: "(x+2)² = 0, x = −2." },
+      { q: "The discriminant of x² − 6x + 9 is:", choices: ["0", "36", "−36", "9"], answer: 0, exp: "36 − 36 = 0." },
+      { q: "Simplify: (x² − 1)/(x + 1)", choices: ["x − 1", "x + 1", "x² − 1", "x"], answer: 0, exp: "(x−1)(x+1)/(x+1) = x − 1." },
+      { q: "If 2ˣ = 32, then x = ?", choices: ["4", "5", "6", "16"], answer: 1, exp: "2⁵ = 32." },
+      { q: "The vertex of y = x² − 4x + 1 is:", choices: ["(2, −3)", "(−2, 3)", "(2, 3)", "(4, 1)"], answer: 0, exp: "x = 2, y = 4 − 8 + 1 = −3." }
+    ],
+    data: [
+      { q: "Mean of 4, 8, 10, 14:", choices: ["8", "9", "10", "12"], answer: 1, exp: "36/4 = 9." },
+      { q: "Median of 3, 7, 9, 12, 15:", choices: ["7", "9", "12", "10"], answer: 1, exp: "Middle value is 9." },
+      { q: "If a bag has 3 red and 5 blue marbles, P(red) = ?", choices: ["3/5", "3/8", "5/8", "1/3"], answer: 1, exp: "3 out of 8 total." },
+      { q: "A data set has mean 50 and std dev 5. A value of 60 has z-score:", choices: ["1", "2", "10", "0.5"], answer: 1, exp: "(60−50)/5 = 2." },
+      { q: "Mode of 2, 4, 4, 4, 5, 7:", choices: ["2", "4", "5", "7"], answer: 1, exp: "4 appears most often." }
+    ],
+    geometry: [
+      { q: "Area of a circle with radius 3 (in terms of π):", choices: ["3π", "6π", "9π", "12π"], answer: 2, exp: "πr² = 9π." },
+      { q: "Two angles are supplementary. One is 65°. The other is:", choices: ["25°", "115°", "65°", "90°"], answer: 1, exp: "180 − 65 = 115°." },
+      { q: "Volume of a cylinder with r = 2, h = 5 (in terms of π):", choices: ["10π", "20π", "40π", "4π"], answer: 1, exp: "πr²h = 20π." },
+      { q: "In similar triangles, corresponding sides are:", choices: ["Equal", "Proportional", "Perpendicular", "Parallel"], answer: 1, exp: "Similar triangles have proportional sides." },
+      { q: "The hypotenuse of a 45-45-90 triangle with legs 1 is:", choices: ["1", "√2", "2", "√3"], answer: 1, exp: "c = √(1+1) = √2." }
+    ]
+  };
+
+  function shuffle(arr) {
+    var a = arr.slice();
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+
+  function makeDrill(prefix, topics) {
+    var state = { questions: [], index: 0, correct: 0, answered: 0, selected: null };
+    var questionEl = document.getElementById(prefix + "-question");
+    var scoreEl = document.getElementById(prefix + "-score");
+    var topicEl = document.getElementById(prefix + "-topic");
+    var startBtn = document.getElementById(prefix + "-start");
+    var resetBtn = document.getElementById(prefix + "-reset");
+
+    function updateScore() {
+      scoreEl.textContent = state.correct + " / " + state.answered + " correct";
+    }
+
+    function start() {
+      var topic = topicEl.value;
+      var pool = [];
+      if (topic === "all") {
+        topics.forEach(function (t) { pool = pool.concat(QUESTION_BANK[t] || []); });
+      } else {
+        pool = (QUESTION_BANK[topic] || []).slice();
+      }
+      if (!pool.length) {
+        questionEl.innerHTML = '<div class="warn">No questions available for this topic.</div>';
+        return;
+      }
+      state.questions = shuffle(pool).slice(0, Math.min(10, pool.length));
+      state.index = 0;
+      state.correct = 0;
+      state.answered = 0;
+      state.selected = null;
+      updateScore();
+      renderQuestion();
+    }
+
+    function renderQuestion() {
+      if (state.index >= state.questions.length) {
+        var pct = state.answered ? Math.round(state.correct / state.answered * 100) : 0;
+        questionEl.innerHTML =
+          '<div class="note"><div class="k">Drill complete</div>' +
+          '<div class="v" style="font-size:22px">' + state.correct + " / " + state.answered + " (" + pct + '%)</div></div>' +
+          '<div class="btn-row" style="margin-top:14px"><button class="btn" id="' + prefix + '-again">Start another drill</button></div>';
+        var again = document.getElementById(prefix + "-again");
+        if (again) again.addEventListener("click", start);
+        return;
+      }
+      var q = state.questions[state.index];
+      state.selected = null;
+      var html = '<div class="panel-block"><div class="k">Question ' + (state.index + 1) + " of " + state.questions.length + '</div>' +
+        '<div class="v" style="font-size:16px;line-height:1.5;margin-top:8px">' + q.q + '</div></div>' +
+        '<div class="btn-row" style="flex-direction:column;margin-top:14px">';
+      q.choices.forEach(function (c, i) {
+        html += '<button class="btn" style="width:100%;text-align:left;padding:12px 16px" data-choice="' + i + '">' +
+          String.fromCharCode(65 + i) + ". " + c + '</button>';
+      });
+      html += '</div><div id="' + prefix + '-feedback" style="margin-top:14px"></div>';
+      questionEl.innerHTML = html;
+
+      questionEl.querySelectorAll("[data-choice]").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          if (state.selected !== null) return;
+          var choice = parseInt(btn.getAttribute("data-choice"), 10);
+          state.selected = choice;
+          state.answered++;
+          var correct = choice === q.answer;
+          if (correct) state.correct++;
+          updateScore();
+          questionEl.querySelectorAll("[data-choice]").forEach(function (b) {
+            var ci = parseInt(b.getAttribute("data-choice"), 10);
+            b.disabled = true;
+            if (ci === q.answer) b.style.borderColor = "#22c55e";
+            else if (ci === choice) b.style.borderColor = "#f87171";
+          });
+          var fb = document.getElementById(prefix + "-feedback");
+          fb.innerHTML = '<div class="' + (correct ? "note" : "warn") + '">' +
+            '<div class="k">' + (correct ? "Correct" : "Not quite") + '</div>' +
+            '<div class="v" style="font-size:13px;line-height:1.6">' + q.exp + '</div></div>' +
+            '<div class="btn-row" style="margin-top:12px"><button class="btn" id="' + prefix + '-next">Next question</button></div>';
+          document.getElementById(prefix + "-next").addEventListener("click", function () {
+            state.index++;
+            renderQuestion();
+          });
+        });
+      });
+    }
+
+    startBtn.addEventListener("click", start);
+    resetBtn.addEventListener("click", function () {
+      state.questions = []; state.index = 0; state.correct = 0; state.answered = 0;
+      updateScore();
+      questionEl.innerHTML = '<div class="empty">Press "Start 10-question drill" to begin.</div>';
+    });
+  }
+
+  makeDrill("act", ["prealgebra", "elementary", "intermediate", "coordinate", "plane", "trig"]);
+  makeDrill("sat", ["algebra", "advanced", "data", "geometry"]);
+  makeDrill("psat", ["algebra", "advanced", "data", "geometry"]);
+
+  /* ================= Init ================= */
+  updateMem();
+  updateAngle();
+  renderHistory();
+  refreshCalc();
+  solveEquation();
+  renderStats();
+  renderQuad();
+  renderPoly();
+  renderCoord();
+  renderGrowth();
+  renderGeoFields();
+  fillUnitSelects();
+  drawGraph();
+  activateTab("calculator");
+})();
+</script>
+</body>
+</html>

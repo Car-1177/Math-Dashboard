@@ -1,0 +1,8 @@
+📁 your-project
+├── 📄 .env              ← new
+├── 📄 package.json
+├── 📄 vite.config.ts
+├── 📄 index.html
+└── 📁 src
+    └── 📁 lib
+        └── 📄 supabase.ts

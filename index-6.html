@@ -1,0 +1,116 @@
+  /* ================= Part 6: Practice + Progress ================= */
+  var PROGRESS_KEY = "mathdash.progress.v1";
+  var progress = { attempted: 0, correct: 0, streak: 0, bestStreak: 0, topics: {} };
+
+  function loadProgress() {
+    try {
+      var raw = localStorage.getItem(PROGRESS_KEY);
+      if (raw) progress = JSON.parse(raw);
+    } catch (e) {}
+    if (!progress.topics) progress.topics = {};
+  }
+  function saveProgress() {
+    try { localStorage.setItem(PROGRESS_KEY, JSON.stringify(progress)); } catch (e) {}
+  }
+
+  function recordAnswer(topic, correct) {
+    progress.attempted++;
+    if (correct) { progress.correct++; progress.streak++; if (progress.streak > progress.bestStreak) progress.bestStreak = progress.streak; }
+    else { progress.streak = 0; }
+    if (!progress.topics[topic]) progress.topics[topic] = { attempted: 0, correct: 0 };
+    progress.topics[topic].attempted++;
+    if (correct) progress.topics[topic].correct++;
+    saveProgress();
+    renderProgress();
+  }
+
+  function renderProgress() {
+    var acc = progress.attempted ? (progress.correct / progress.attempted * 100) : 0;
+    document.getElementById("progress-grid").innerHTML =
+      '<div class="progress-tile"><div class="pt-val">' + progress.attempted + '</div><div class="pt-label">Attempted</div></div>' +
+      '<div class="progress-tile"><div class="pt-val">' + progress.correct + '</div><div class="pt-label">Correct</div></div>' +
+      '<div class="progress-tile"><div class="pt-val">' + fmt(acc) + '%</div><div class="pt-label">Accuracy</div></div>' +
+      '<div class="progress-tile"><div class="pt-val">' + progress.streak + '</div><div class="pt-label">Current streak</div></div>' +
+      '<div class="progress-tile"><div class="pt-val">' + progress.bestStreak + '</div><div class="pt-label">Best streak</div></div>';
+
+    var topics = Object.keys(progress.topics);
+    if (!topics.length) { document.getElementById("progress-topics").innerHTML = '<div class="empty">No practice data yet.</div>'; return; }
+    document.getElementById("progress-topics").innerHTML = topics.map(function (t) {
+      var d = progress.topics[t];
+      var pct = d.attempted ? (d.correct / d.attempted * 100) : 0;
+      return '<div class="topic-bar"><div class="tb-head"><span>' + t + '</span><span>' + d.correct + '/' + d.attempted + ' (' + fmt(pct) + '%)</span></div>' +
+        '<div class="tb-track"><div class="tb-fill" style="width:' + pct + '%"></div></div></div>';
+    }).join("");
+  }
+
+  document.getElementById("progress-reset").addEventListener("click", function () {
+    progress = { attempted: 0, correct: 0, streak: 0, bestStreak: 0, topics: {} };
+    saveProgress(); renderProgress();
+  });
+
+  /* ---- Practice generator ---- */
+  var practiceQ = document.getElementById("practice-q");
+  var practiceFeedback = document.getElementById("practice-feedback");
+  var currentAnswer = null;
+  var currentTopic = "linear";
+
+  function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+
+  function generateProblem(topic) {
+    currentTopic = topic;
+    practiceFeedback.innerHTML = "";
+    document.getElementById("practice-answer").value = "";
+    var q, ans, tol = 0.01;
+
+    if (topic === "linear") {
+      var a = randInt(2, 9), x = randInt(-8, 8), b = randInt(-12, 12);
+      var c = a * x + b;
+      q = a + "x " + (b >= 0 ? "+ " + b : "− " + Math.abs(b)) + " = " + c + "   →   x = ?";
+      ans = x;
+    } else if (topic === "quadratic") {
+      var r1 = randInt(-6, 6), r2 = randInt(-6, 6);
+      var bb = -(r1 + r2), cc = r1 * r2;
+      q = "x² " + (bb >= 0 ? "+ " + bb : "− " + Math.abs(bb)) + "x " + (cc >= 0 ? "+ " + cc : "− " + Math.abs(cc)) + " = 0   →   larger root?";
+      ans = Math.max(r1, r2);
+    } else if (topic === "stats") {
+      var nums = [];
+      for (var i = 0; i < 5; i++) nums.push(randInt(1, 20));
+      var sum = nums.reduce(function (s, v) { return s + v; }, 0);
+      q = "Mean of " + nums.join(", ") + " = ?";
+      ans = sum / nums.length;
+    } else if (topic === "geometry") {
+      var w = randInt(3, 15), h = randInt(3, 15);
+      q = "Rectangle " + w + " × " + h + "   →   area = ?";
+      ans = w * h;
+    } else {
+      var fn1 = randInt(1, 9), fd1 = randInt(2, 9), fn2 = randInt(1, 9), fd2 = randInt(2, 9);
+      q = fn1 + "/" + fd1 + " + " + fn2 + "/" + fd2 + "   →   decimal value = ?";
+      ans = fn1 / fd1 + fn2 / fd2;
+      tol = 0.005;
+    }
+    currentAnswer = ans;
+    practiceQ.textContent = q;
+  }
+
+  document.getElementById("practice-new").addEventListener("click", function () {
+    generateProblem(document.getElementById("practice-topic").value);
+  });
+
+  document.getElementById("practice-check").addEventListener("click", function () {
+    if (currentAnswer === null) { practiceFeedback.innerHTML = '<div class="practice-feedback reveal">Generate a problem first.</div>'; return; }
+    var user = parseFloat(document.getElementById("practice-answer").value);
+    if (isNaN(user)) { practiceFeedback.innerHTML = '<div class="practice-feedback reveal">Enter a numeric answer.</div>'; return; }
+    var correct = Math.abs(user - currentAnswer) < 0.01;
+    recordAnswer(currentTopic, correct);
+    practiceFeedback.innerHTML = correct
+      ? '<div class="practice-feedback correct">✓ Correct! Answer: ' + fmt(currentAnswer) + '</div>'
+      : '<div class="practice-feedback wrong">✗ Not quite. Try again or reveal the solution.</div>';
+  });
+
+  document.getElementById("practice-reveal").addEventListener("click", function () {
+    if (currentAnswer === null) return;
+    practiceFeedback.innerHTML = '<div class="practice-feedback reveal">Solution: ' + fmt(currentAnswer) + '</div>';
+  });
+
+  loadProgress();
+  renderProgress();
